@@ -5,7 +5,6 @@ const REQUIRED_ENV_VARS = [
   'COMPANY_ADMIN_EMAIL',
   'COMPANY_NAME',
   'FRONTEND_URL',
-  'INVESTMENT_PACKAGES',
 ];
 
 export function validateEnv() {

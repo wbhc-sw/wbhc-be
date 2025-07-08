@@ -3,11 +3,11 @@ import { investorSchema } from '../middleware/validation';
 import { prisma } from '../services/database';
 // import { sendAdminNotification, sendInvestorConfirmation } from '../services/email';
 import xss from 'xss';
-import { INVESTMENT_PACKAGES } from '../utils/constants';
+// import { INVESTMENT_PACKAGES } from '../utils/constants';
 
 const router = Router();
 
-console.log('Allowed investment packages:', INVESTMENT_PACKAGES);
+// console.log('Allowed investment packages:', INVESTMENT_PACKAGES);
 
 // @ts-expect-error: Suppress Express 5 type error
 router.post('/', async (req, res, next) => {
