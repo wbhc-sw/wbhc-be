@@ -1,4 +1,4 @@
-export const FRONTEND_URL = process.env.FRONTEND_URL || '*';
+export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 // Hardcoded investment packages
 export const INVESTMENT_PACKAGES = [
