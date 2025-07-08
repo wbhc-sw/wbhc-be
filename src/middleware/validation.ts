@@ -7,7 +7,7 @@ export const investorSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => !val || /^\+?[1-9]\d{1,14}$/.test(val),
+      (val) => !val || /^[0-9+\-\s()]+$/.test(val),
       'Invalid phone number format'
     ),
   investmentPackage: z.enum(INVESTMENT_PACKAGES),
