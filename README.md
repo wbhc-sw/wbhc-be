@@ -169,3 +169,36 @@ See `.env.example` for all required variables.
 
 ## 👨‍💻 Author & License
 - MIT License 
+
+## JWT Authentication Setup
+
+### 1. Environment Variables
+Add the following to your `.env` file:
+
+```
+JWT_SECRET=your-very-strong-secret
+ADMIN_USERNAME=your-admin-username
+ADMIN_PASSWORD_HASH=your-bcrypt-hash
+```
+
+- Generate `ADMIN_PASSWORD_HASH` using bcryptjs:
+  ```js
+  // Run this in a Node.js REPL or script
+  const bcrypt = require('bcryptjs');
+  bcrypt.hash('your-password', 12).then(console.log);
+  ```
+  Copy the output to `ADMIN_PASSWORD_HASH` in your `.env`.
+
+### 2. Endpoints
+- `POST /api/admin/login` — Accepts `{ username, password }` and returns `{ token }` if valid.
+- All `/api/investor-form` routes are now protected and require a valid JWT in the `Authorization: Bearer <token>` header.
+
+### 3. Dependencies
+Install required packages:
+```
+npm install jsonwebtoken bcryptjs @types/jsonwebtoken @types/bcryptjs --save
+```
+
+### 4. Usage
+- Login as admin to get a JWT token.
+- Use the token in the `Authorization` header to access protected routes. 

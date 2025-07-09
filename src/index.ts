@@ -6,8 +6,10 @@ import dotenv from 'dotenv';
 import { rateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
 import investorRouter from './routes/investor';
+import adminRouter from './routes/admin';
+import { jwtAuth } from './middleware/jwtAuth';
 import { validateEnv } from './services/validation';
-import { FRONTEND_URL } from './utils/constants';
+// import { FRONTEND_URL } from './utils/constants';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +42,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API routes
+app.use('/api/admin', adminRouter);
 app.use('/api/investor-form', investorRouter);
 
 // Error handling middleware

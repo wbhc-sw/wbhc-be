@@ -55,4 +55,16 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// GET / - Return all investor submissions
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const investors = await prisma.investor.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.status(200).json({ success: true, data: investors });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router; 
