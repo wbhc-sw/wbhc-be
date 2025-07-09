@@ -4,6 +4,7 @@ import { prisma } from '../services/database';
 // import { sendAdminNotification, sendInvestorConfirmation } from '../services/email';
 import xss from 'xss';
 // import { INVESTMENT_PACKAGES } from '../utils/constants';
+import { jwtAuth } from '../middleware/jwtAuth';
 
 const router = Router();
 
@@ -55,8 +56,8 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// GET / - Return all investor submissions
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+// GET / - Return all investor submissions (private, admin only)
+router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const investors = await prisma.investor.findMany({
       orderBy: { createdAt: 'desc' },
