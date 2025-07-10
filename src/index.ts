@@ -21,6 +21,18 @@ validateEnv();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const {
+  EMAIL_SERVICE_USER,
+  EMAIL_SERVICE_PASS,
+  COMPANY_ADMIN_EMAIL,
+  COMPANY_NAME,
+} = process.env;
+
+console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
+console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
+console.log('COMPANY_ADMIN_EMAIL:',   COMPANY_ADMIN_EMAIL);
+console.log('COMPANY_NAME:', COMPANY_NAME);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

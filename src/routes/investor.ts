@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { investorSchema } from '../middleware/validation';
 import { prisma } from '../services/database';
-// import { sendAdminNotification, sendInvestorConfirmation } from '../services/email';
+import { sendAdminNotification } from '../services/email';
 import xss from 'xss';
 // import { INVESTMENT_PACKAGES } from '../utils/constants';
 import { jwtAuth } from '../middleware/jwtAuth';
@@ -32,12 +32,12 @@ router.post('/', async (req, res, next) => {
     });
 
     // --- Email features temporarily disabled ---
-    // await sendAdminNotification(investor);
+    await sendAdminNotification(investor);
     // await sendInvestorConfirmation(investor);
-    // await prisma.investor.update({
-    //   where: { id: investor.id },
-    //   data: { emailSentToAdmin: true, emailSentToInvestor: true },
-    // });
+    await prisma.investor.update({
+      where: { id: investor.id },
+      data: { emailSentToAdmin: true, emailSentToInvestor: true },
+    });
 
     res.status(201).json({
       success: true,
