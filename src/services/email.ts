@@ -29,7 +29,10 @@ console.log(transporter);
 
 export async function sendAdminNotification(investor: EmailInvestor) {
   const mailOptions = {
-    from: EMAIL_SERVICE_USER,
+    from: {
+      name: COMPANY_NAME || 'emails.ts 33',
+      address: EMAIL_SERVICE_USER || 'emails.ts 34'
+    },
     to: COMPANY_ADMIN_EMAIL,
     subject: `استفسار مستثمر جديد - ${investor.fullName}`,
     html: `
