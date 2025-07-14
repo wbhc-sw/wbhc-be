@@ -36,52 +36,52 @@ export async function sendAdminNotification(investor: EmailInvestor) {
     to: COMPANY_ADMIN_EMAIL,
     subject: `استفسار مستثمر جديد - ${investor.fullName}`,
     html: `
-  <div dir="rtl" style="background: #f7f7fa; padding: 40px 0; min-height: 100vh;">
-    <div style="
-      max-width: 520px;
-      margin: auto;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-      padding: 32px 28px 24px 28px;
-      font-family: 'Cairo', 'Tahoma', Arial, sans-serif;
-      color: #000;
-      font-size: 20px;
-      line-height: 1.8;
-    ">
-      <img src="cid:logograb" alt="Logo" style="max-width: 160px; display: block; margin: 0 auto 24px auto;" />
-      <h2 style="font-size: 2.1em; font-weight: 800; margin-bottom: 18px; color: #000;">استفسار مستثمر جديد</h2>
-      <p style="margin: 0 0 12px 0; font-size: 1.1em; color: #000;">مرحباً،</p>
-      <p style="margin: 0 0 18px 0; color: #000;">تم استلام استفسار جديد من مستثمر عبر نموذج الموقع. التفاصيل أدناه:</p>
-      <ul style="list-style: none; padding: 0; margin: 0 0 18px 0; color: #000;">
-        <li style="margin-bottom: 8px;"><b>الاسم:</b> ${investor.fullName}</li>
-        <li style="margin-bottom: 8px;">
-          <b>رقم الجوال:</b>
-          <span dir="ltr" style="unicode-bidi: embed;">${investor.phoneNumber || 'غير متوفر'}</span>
-        </li>
-        <li style="margin-bottom: 8px;"><b>الباقة الاستثمارية:</b> ${investor.investmentPackage}</li>
-        <li style="margin-bottom: 8px;"><b>المدينة:</b> ${investor.city}</li>
-        <li style="margin-bottom: 8px;"><b>تاريخ الإرسال:</b> ${investor.createdAt}</li>
-        <li style="margin-bottom: 8px;"><b>رقم الطلب:</b> ${investor.id}</li>
-      </ul>
-      <p style="margin: 0 0 18px 0; color: #000;">يرجى متابعة الطلب والتواصل مع المستثمر في أقرب وقت ممكن.</p>
-      <img src="cid:footerimg" style="max-width: 100%; height: auto; margin-top: 24px; border-radius: 8px;" alt="Footer"/>
-      <p style="color: #888; font-size: 1em; margin-top: 24px;">مع تحيات فريق ${COMPANY_NAME}</p>
-    </div>
-  </div>
-`,
-    attachments: [
-      {
-        filename: 'logo_grab.png',
-        path: require('path').join(__dirname, '../../logo_grab.png'),
-        cid: 'logograb'
-      },
-      {
-        filename: 'footer.png',
-        path: require('path').join(__dirname, '../../footer.png'),
-        cid: 'footerimg'
-      }
-    ]
+        <div dir="rtl" style="background: #f7f7fa; padding: 40px 0; min-height: 100vh;">
+            <div style="
+            max-width: 520px;
+            margin: auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+            padding: 32px 28px 24px 28px;
+            font-family: 'Cairo', 'Tahoma', Arial, sans-serif;
+            color: #000;
+            font-size: 20px;
+            line-height: 1.8;
+            ">
+            <img src="cid:logograb" alt="Logo" style="max-width: 160px; display: block; margin: 0 auto 24px auto;" />
+            <h2 style="font-size: 2.1em; font-weight: 800; margin-bottom: 18px; color: #000;">استفسار مستثمر جديد</h2>
+            <p style="margin: 0 0 12px 0; font-size: 1.1em; color: #000;">مرحباً،</p>
+            <p style="margin: 0 0 18px 0; color: #000;">تم استلام استفسار جديد من مستثمر عبر نموذج الموقع. التفاصيل أدناه:</p>
+            <ul style="list-style: none; padding: 0; margin: 0 0 18px 0; color: #000;">
+                <li style="margin-bottom: 8px;"><b>الاسم:</b> ${investor.fullName}</li>
+                <li style="margin-bottom: 8px;">
+                <b>رقم الجوال:</b>
+                <span dir="ltr" style="unicode-bidi: embed;">${investor.phoneNumber || 'غير متوفر'}</span>
+                </li>
+                <li style="margin-bottom: 8px;"><b>الباقة الاستثمارية:</b> ${investor.investmentPackage}</li>
+                <li style="margin-bottom: 8px;"><b>المدينة:</b> ${investor.city}</li>
+                <li style="margin-bottom: 8px;"><b>تاريخ الإرسال:</b> ${investor.createdAt}</li>
+                <li style="margin-bottom: 8px;"><b>رقم الطلب:</b> ${investor.id}</li>
+            </ul>
+            <p style="margin: 0 0 18px 0; color: #000;">يرجى متابعة الطلب والتواصل مع المستثمر في أقرب وقت ممكن.</p>
+            <img src="cid:footerimg" style="max-width: 100%; height: auto; margin-top: 24px; border-radius: 8px;" alt="Footer"/>
+            <p style="color: #888; font-size: 1em; margin-top: 24px;">مع تحيات فريق ${COMPANY_NAME}</p>
+            </div>
+        </div>
+        `,
+        attachments: [
+        {
+            filename: 'logo_grab.png',
+            path: require('path').join(__dirname, '../../logo_grab.png'),
+            cid: 'logograb'
+        },
+        {
+            filename: 'footer.png',
+            path: require('path').join(__dirname, '../../footer.png'),
+            cid: 'footerimg'
+        }
+        ]
   };
   try {
     await transporter.sendMail(mailOptions);

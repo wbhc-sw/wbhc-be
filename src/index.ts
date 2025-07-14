@@ -9,6 +9,7 @@ import investorRouter from './routes/investor';
 import adminRouter from './routes/admin';
 import { jwtAuth } from './middleware/jwtAuth';
 import { validateEnv } from './services/validation';
+import investorAdminRouter from './routes/investorAdmin';
 // import { FRONTEND_URL } from './utils/constants';
 
 // Load environment variables
@@ -56,6 +57,7 @@ app.get('/health', (req: Request, res: Response) => {
 // API routes
 app.use('/api/admin', adminRouter);
 app.use('/api/investor-form', investorRouter);
+app.use('/api/admin/investor-admin', investorAdminRouter);
 
 // Error handling middleware
 app.use(errorHandler);
