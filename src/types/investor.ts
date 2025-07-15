@@ -20,5 +20,6 @@ export interface InvestorAdmin {
   callingTimes: number;
   leadStatus: string;
   originalInvestorId?: string | null;
+  investmentAmount?: number | null;
   originalInvestor?: InvestorForm | null;
 }

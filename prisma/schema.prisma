@@ -22,13 +22,14 @@ model Investor {
 
   @@index([investmentPackage])
   @@index([createdAt])
-}
+} 
 
 model InvestorAdmin {
   id                  String   @id @default(uuid())
   fullName            String
   phoneNumber         String?
   investmentPackage   String
+  investmentAmount    Float? // <-- Add this line (nullable float)
   city                String
   submissionStatus    String   @default("received")
   createdAt           DateTime @default(now())

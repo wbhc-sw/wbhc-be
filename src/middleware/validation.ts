@@ -12,7 +12,7 @@ export const investorSchema = z.object({
     ),
   investmentPackage: z.string().min(1, 'Investment package is required'),
   city: z.string().min(1, 'City is required'),
-});
+}); 
 
 export const investorAdminCreateSchema = z.object({
   fullName: z.string().min(2, 'Full Name must be at least 2 characters'),
@@ -30,6 +30,7 @@ export const investorAdminCreateSchema = z.object({
   callingTimes: z.number().int().min(0).optional(),
   leadStatus: z.string().optional(),
   originalInvestorId: z.string().uuid().optional(),
+  investmentAmount: z.number().optional(),
 });
 
 export const investorAdminUpdateSchema = z.object({
@@ -48,4 +49,5 @@ export const investorAdminUpdateSchema = z.object({
   callingTimes: z.number().int().min(0).optional(),
   leadStatus: z.string().optional(),
   originalInvestorId: z.string().uuid().optional(),
+  investmentAmount: z.number().optional(),
 }); 

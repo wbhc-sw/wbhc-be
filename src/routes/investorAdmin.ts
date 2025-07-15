@@ -99,4 +99,20 @@ router.post('/transfer/:investorId', jwtAuth, (req: Request, res: Response, next
     .catch(next);
 });
 
+// GET /api/admin/investor-admin/statistics - Get investment amount statistics
+router.get('/statistics', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const stats = await prisma.investorAdmin.aggregate({
+      _max: { investmentAmount: true },
+      _min: { investmentAmount: true },
+      _avg: { investmentAmount: true },
+      _sum: { investmentAmount: true },
+      _count: { investmentAmount: true },
+    });
+    res.status(200).json({ success: true, data: stats });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router; 
