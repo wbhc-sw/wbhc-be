@@ -26,10 +26,10 @@ const PORT = process.env.PORT || 4000;
 const {
   FRONTEND_URL,
   FRONTEND_2_URL,
-  NODE_ENV
+  // NODE_ENV
 } = process.env;
 
-console.log([FRONTEND_URL, FRONTEND_2_URL, NODE_ENV].filter((url): url is string => typeof url === 'string'));
+console.log([FRONTEND_URL, FRONTEND_2_URL].filter((url): url is string => typeof url === 'string'));
 
 // console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
 // console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);

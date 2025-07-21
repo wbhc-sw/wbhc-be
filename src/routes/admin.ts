@@ -31,7 +31,7 @@ router.post('/login', async (req: Request, res: Response) => {
   // Set JWT as HttpOnly cookie
   res.cookie('admin_jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // CORRECT: Only secure in production
+    secure: true, //process.env.NODE_ENV === 'production', // CORRECT: Only secure in production
     sameSite: 'lax', // or 'strict' if you prefer
     path: '/',
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -44,7 +44,7 @@ router.post('/login', async (req: Request, res: Response) => {
 router.post('/logout', (req: Request, res: Response) => {
   res.cookie('admin_jwt', '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // CORRECT: Only secure in production
+    secure: true, //process.env.NODE_ENV === 'production', // CORRECT: Only secure in production
     sameSite: 'lax', // or 'strict'
     path: '/',
     expires: new Date(0), // Expire the cookie immediately
