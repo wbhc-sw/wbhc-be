@@ -107,7 +107,7 @@ src/
 
 ---
 
-## 🔒 Security
+## 🔒 Security 
 - CORS: Only allows requests from your frontend URL
 - Rate limiting: 5 requests/minute per IP
 - Input sanitization: Prevents XSS
@@ -633,3 +633,74 @@ Authorization: Bearer <your-admin-jwt>
 - Use Postman or curl to test each endpoint.
 - Always log in as admin (`POST /api/admin/login`) to get your JWT token.
 - For the transfer API, get a valid `investorId` from the public `Investor` table. 
+
+## 🛡️ Security Improvements
+
+### 1. Secure Cookie-Based Authentication
+- Admin authentication now uses a JWT stored in an `HttpOnly` cookie (`admin_jwt`).
+- Cookie attributes:
+  - `HttpOnly: true` (not accessible via JavaScript, protects against XSS)
+  - `Secure: true` in production (only sent over HTTPS)
+  - `SameSite: 'lax'` (mitigates most CSRF attacks)
+  - `Path: '/'`
+  - `maxAge`: 24 hours
+
+### 2. Authentication Middleware
+- All protected admin endpoints use middleware that reads the JWT from the `admin_jwt` cookie.
+- Requests without a valid cookie are rejected with `401 Unauthorized`.
+
+### 3. Logout Endpoint
+- `POST /api/admin/logout` clears the `admin_jwt` cookie using the same attributes as when it was set.
+
+### 4. CORS Configuration
+- Only allows requests from whitelisted origins (set via environment variables: `FRONTEND_URL`, `FRONTEND_2_URL`).
+- `credentials: true` is set, so cookies are sent/received cross-origin only from allowed frontends.
+
+### 5. Rate Limiting
+- Global rate limiting is enabled (default: 5 requests per minute per IP).
+- Helps prevent brute-force and abuse.
+
+### 6. Input Validation & Sanitization
+- All user input is validated using [zod](https://github.com/colinhacks/zod) schemas.
+- All string input is sanitized using [xss](https://www.npmjs.com/package/xss) to prevent XSS attacks.
+
+### 7. Environment Variable Validation
+- The server checks for all required environment variables at startup and will not run if any are missing.
+
+### 8. Secure HTTP Headers
+- [helmet](https://helmetjs.github.io/) is used to set secure HTTP headers.
+
+### 9. Error Handling
+- Centralized error handler returns clear, non-sensitive error messages.
+
+### 10. Database Security
+- Uses Prisma ORM to prevent SQL injection.
+- No raw SQL queries are used.
+
+---
+
+## ⚠️ Developer Notes
+
+- **Never store JWTs or sensitive tokens in localStorage or sessionStorage.**
+- **Never use `*` as a CORS origin.** Always specify allowed origins.
+- **Always use `secure: true` for cookies in production.**
+- **Never commit `.env` files or secrets to version control.**
+- **If you change cookie attributes, always use the same attributes when clearing the cookie.**
+- **In production, always use HTTPS.** Secure cookies will not be sent over HTTP.
+
+---
+
+## 🔒 Security Summary Table
+
+| Area            | Best Practice Implemented                |
+|-----------------|-----------------------------------------|
+| Auth            | HttpOnly, Secure, SameSite cookies      |
+| CORS            | Whitelisted origins, credentials: true  |
+| Rate Limiting   | 5 req/min/IP (configurable)             |
+| Validation/XSS  | zod + xss                               |
+| Env Vars        | Validated at startup                    |
+| DB              | Prisma ORM                              |
+| Headers         | helmet                                  |
+| Error Handling  | Centralized                             |
+
+--- 

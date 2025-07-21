@@ -10,6 +10,7 @@ import adminRouter from './routes/admin';
 import { jwtAuth } from './middleware/jwtAuth';
 import { validateEnv } from './services/validation';
 import investorAdminRouter from './routes/investorAdmin';
+import cookieParser from 'cookie-parser';
 // import { FRONTEND_URL } from './utils/constants';
 
 // Load environment variables
@@ -23,31 +24,29 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 const {
-  EMAIL_SERVICE_USER,
-  EMAIL_SERVICE_PASS,
-  COMPANY_ADMIN_EMAIL,
-  COMPANY_NAME,
+  FRONTEND_URL,
+  FRONTEND_2_URL,
+  NODE_ENV
 } = process.env;
 
-console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
-console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
-console.log('COMPANY_ADMIN_EMAIL:',   COMPANY_ADMIN_EMAIL);
-console.log('COMPANY_NAME:', COMPANY_NAME);
+console.log([FRONTEND_URL, FRONTEND_2_URL, NODE_ENV].filter((url): url is string => typeof url === 'string'));
+
+// console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
+// console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
+// console.log('COMPANY_ADMIN_EMAIL:',   COMPANY_ADMIN_EMAIL);
+// console.log('COMPANY_NAME:', COMPANY_NAME);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: [
-    "https://grab.sa",
-    "https://www.grab.sa",
-    "http://localhost:3000"
-  ],
+  origin: [FRONTEND_URL, FRONTEND_2_URL].filter((url): url is string => typeof url === 'string'),
   credentials: true,
 }));
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(rateLimiter);
+app.use(cookieParser());
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

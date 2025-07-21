@@ -12,12 +12,12 @@ export interface AuthRequest extends Request {
 }
 
 export function jwtAuth(req: AuthRequest, res: Response, next: NextFunction): void {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ success: false, error: 'Missing or invalid Authorization header' });
+  // Read token from cookie instead of Authorization header
+  const token = req.cookies?.admin_jwt;
+  if (!token) {
+    res.status(401).json({ success: false, error: 'Missing authentication cookie' });
     return;
   }
-  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;

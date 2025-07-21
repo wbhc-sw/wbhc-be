@@ -27,7 +27,29 @@ router.post('/login', async (req: Request, res: Response) => {
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
   }
   const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  return res.status(200).json({ success: true, token });
+
+  // Set JWT as HttpOnly cookie
+  res.cookie('admin_jwt', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // CORRECT: Only secure in production
+    sameSite: 'lax', // or 'strict' if you prefer
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  });
+
+  return res.status(200).json({ success: true });
+});
+
+// Logout endpoint
+router.post('/logout', (req: Request, res: Response) => {
+  res.cookie('admin_jwt', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // CORRECT: Only secure in production
+    sameSite: 'lax', // or 'strict'
+    path: '/',
+    expires: new Date(0), // Expire the cookie immediately
+  });
+  res.json({ success: true });
 });
 
 export default router; 

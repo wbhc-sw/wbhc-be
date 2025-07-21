@@ -1,4 +1,4 @@
-export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000" || "https://grab.sa";
+export const FRONTEND_URL = process.env.FRONTEND_URL;
 
 // Hardcoded investment packages
 // export const INVESTMENT_PACKAGES = [

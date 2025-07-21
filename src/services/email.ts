@@ -11,8 +11,8 @@ const {
   COMPANY_NAME,
 } = process.env;
 
-console.log('@@@@@ EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
-console.log('@@@@@ EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
+// console.log('@@@@@ EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
+// console.log('@@@@@ EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-console.log(transporter);
+// console.log(transporter);
 
 export async function sendAdminNotification(investor: EmailInvestor) {
   const mailOptions = {
