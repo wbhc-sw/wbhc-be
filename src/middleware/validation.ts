@@ -10,7 +10,8 @@ export const investorSchema = z.object({
       (val) => !val || /^[0-9+\-\s()]+$/.test(val),
       'Invalid phone number format'
     ),
-  investmentPackage: z.string().min(1, 'Investment package is required'),
+  sharesQuantity: z.number().int().min(1, 'Shares quantity must be at least 1').optional(),
+  calculatedTotal: z.number().positive('Calculated total must be a positive number').optional(),
   city: z.string().min(1, 'City is required'),
 }); 
 
@@ -23,7 +24,8 @@ export const investorAdminCreateSchema = z.object({
       (val) => !val || /^[0-9+\-\s()]+$/.test(val),
       'Invalid phone number format'
     ),
-  investmentPackage: z.string().min(1, 'Investment package is required'),
+  sharesQuantity: z.number().int().min(1, 'Shares quantity must be at least 1').optional(),
+  calculatedTotal: z.number().positive('Calculated total must be a positive number').optional(),
   city: z.string().min(1, 'City is required'),
   submissionStatus: z.string().optional(),
   notes: z.string().optional(),
@@ -42,7 +44,8 @@ export const investorAdminUpdateSchema = z.object({
       (val) => !val || /^[0-9+\-\s()]+$/.test(val),
       'Invalid phone number format'
     ),
-  investmentPackage: z.string().min(1).optional(),
+  sharesQuantity: z.number().int().min(1).optional(),
+  calculatedTotal: z.number().positive().optional(),
   city: z.string().min(1).optional(),
   submissionStatus: z.string().optional(),
   notes: z.string().optional(),

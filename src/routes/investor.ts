@@ -26,17 +26,19 @@ router.post('/', async (req, res, next) => {
       data: {
         fullName: parsed.fullName,
         phoneNumber: parsed.phoneNumber,
-        investmentPackage: parsed.investmentPackage,
+        sharesQuantity: parsed.sharesQuantity,
+        calculatedTotal: parsed.calculatedTotal,
         city: parsed.city,
       },
     });
 
-    // --- Email features temporarily disabled ---
+    // Send admin notification
     await sendAdminNotification(investor);
-    // await sendInvestorConfirmation(investor);
+    
+    // Update email tracking - only admin email was sent
     await prisma.investor.update({
       where: { id: investor.id },
-      data: { emailSentToAdmin: true, emailSentToInvestor: true },
+      data: { emailSentToAdmin: true, emailSentToInvestor: false },
     });
 
     res.status(201).json({

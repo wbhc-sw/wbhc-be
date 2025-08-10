@@ -12,7 +12,8 @@ model Investor {
   id                    String   @id @default(uuid())
   fullName              String
   phoneNumber           String?
-  investmentPackage     String
+  sharesQuantity        Int?
+  calculatedTotal       Float?
   city                  String
   submissionStatus      String   @default("received")
   createdAt             DateTime @default(now())
@@ -20,7 +21,7 @@ model Investor {
   emailSentToAdmin      Boolean  @default(false)
   emailSentToInvestor   Boolean  @default(false)
 
-  @@index([investmentPackage])
+  @@index([sharesQuantity])
   @@index([createdAt])
 } 
 
@@ -28,7 +29,8 @@ model InvestorAdmin {
   id                  String   @id @default(uuid())
   fullName            String
   phoneNumber         String?
-  investmentPackage   String
+  sharesQuantity      Int?
+  calculatedTotal     Float?
   investmentAmount    Float? // <-- Add this line (nullable float)
   city                String
   submissionStatus    String   @default("received")
@@ -41,7 +43,7 @@ model InvestorAdmin {
   leadStatus          String   @default("new")
   originalInvestorId  String?
 
-  @@index([investmentPackage])
+  @@index([sharesQuantity])
   @@index([createdAt])
   @@index([leadStatus])
 } 

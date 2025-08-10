@@ -79,7 +79,8 @@ router.post('/transfer/:investorId', jwtAuth, (req: Request, res: Response, next
             data: {
               fullName: investor.fullName,
               phoneNumber: investor.phoneNumber,
-              investmentPackage: investor.investmentPackage,
+              sharesQuantity: investor.sharesQuantity,
+              calculatedTotal: investor.calculatedTotal,
               city: investor.city,
               submissionStatus: investor.submissionStatus,
               createdAt: new Date(),

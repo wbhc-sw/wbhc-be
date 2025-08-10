@@ -2,7 +2,19 @@ import nodemailer from 'nodemailer';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-type EmailInvestor = Awaited<ReturnType<typeof prisma.investor.create>>;
+type EmailInvestor = {
+  id: string;
+  fullName: string;
+  phoneNumber: string | null;
+  sharesQuantity: number | null;
+  calculatedTotal: number | null;
+  city: string;
+  submissionStatus: string;
+  createdAt: Date;
+  updatedAt: Date;
+  emailSentToAdmin: boolean;
+  emailSentToInvestor: boolean;
+};
 
 const {
   EMAIL_SERVICE_USER,
@@ -59,7 +71,8 @@ export async function sendAdminNotification(investor: EmailInvestor) {
                 <b>رقم الجوال:</b>
                 <span dir="ltr" style="unicode-bidi: embed;">${investor.phoneNumber || 'غير متوفر'}</span>
                 </li>
-                <li style="margin-bottom: 8px;"><b>الباقة الاستثمارية:</b> ${investor.investmentPackage}</li>
+                <li style="margin-bottom: 8px;"><b>عدد الأسهم:</b> ${investor.sharesQuantity}</li>
+                <li style="margin-bottom: 8px;"><b>إجمالي المبلغ:</b> ${investor.calculatedTotal}</li>
                 <li style="margin-bottom: 8px;"><b>المدينة:</b> ${investor.city}</li>
                 <li style="margin-bottom: 8px;"><b>تاريخ الإرسال:</b> ${investor.createdAt}</li>
                 <li style="margin-bottom: 8px;"><b>رقم الطلب:</b> ${investor.id}</li>
