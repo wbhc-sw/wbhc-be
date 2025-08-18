@@ -1,54 +1,35 @@
-import nodemailer from 'nodemailer';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-type EmailInvestor = {
-  id: string;
-  fullName: string;
-  phoneNumber: string | null;
-  company: string | null;
-  sharesQuantity: number | null;
-  calculatedTotal: number | null;
-  city: string;
-  submissionStatus: string;
-  createdAt: Date;
-  updatedAt: Date;
-  emailSentToAdmin: boolean;
-  emailSentToInvestor: boolean;
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-
-const {
-  EMAIL_SERVICE_USER,
-  EMAIL_SERVICE_PASS,
-  COMPANY_ADMIN_EMAIL,
-  COMPANY_NAME,
-} = process.env;
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendAdminNotification = sendAdminNotification;
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
+const { EMAIL_SERVICE_USER, EMAIL_SERVICE_PASS, COMPANY_ADMIN_EMAIL, COMPANY_NAME, } = process.env;
 // console.log('@@@@@ EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
 // console.log('@@@@@ EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: EMAIL_SERVICE_USER,
-    pass: EMAIL_SERVICE_PASS,
-  },
-});
-
-// console.log(transporter);
-
-export async function sendAdminNotification(investor: EmailInvestor) {
-  const mailOptions = {
-    from: {
-      name: investor.company  || 'emails.ts 33',
-      address: EMAIL_SERVICE_USER || 'emails.ts 34'
+const transporter = nodemailer_1.default.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+        user: EMAIL_SERVICE_USER,
+        pass: EMAIL_SERVICE_PASS,
     },
-    to: COMPANY_ADMIN_EMAIL,
-    subject: `استفسار مستثمر جديد - ${investor.fullName}`,
-    html: `
+});
+// console.log(transporter);
+async function sendAdminNotification(investor) {
+    const mailOptions = {
+        from: {
+            name: investor.company || 'emails.ts 33',
+            address: EMAIL_SERVICE_USER || 'emails.ts 34'
+        },
+        to: COMPANY_ADMIN_EMAIL,
+        subject: `استفسار مستثمر جديد - ${investor.fullName}`,
+        html: `
         <div dir="rtl" style="background: #f7f7fa; padding: 40px 0; min-height: 100vh;">
             <div style="
             max-width: 520px;
@@ -86,25 +67,25 @@ export async function sendAdminNotification(investor: EmailInvestor) {
         </div>
         `,
         attachments: [
-        {
-            filename: 'logo_grab.png',
-            path: require('path').join(__dirname, '../../logo_grab.png'),
-            cid: 'logograb'
-        },
-        {
-            filename: 'footer.png',
-            path: require('path').join(__dirname, '../../footer.png'),
-            cid: 'footerimg'
-        }
+            {
+                filename: 'logo_grab.png',
+                path: require('path').join(__dirname, '../../logo_grab.png'),
+                cid: 'logograb'
+            },
+            {
+                filename: 'footer.png',
+                path: require('path').join(__dirname, '../../footer.png'),
+                cid: 'footerimg'
+            }
         ]
-  };
-  try {
-    await transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.error('Email send error:', err);
-  }
+    };
+    try {
+        await transporter.sendMail(mailOptions);
+    }
+    catch (err) {
+        console.error('Email send error:', err);
+    }
 }
-
 // export async function sendInvestorConfirmation(investor: EmailInvestor) {
 //   const mailOptions = {
 //     from: EMAIL_SERVICE_USER,

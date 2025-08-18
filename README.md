@@ -9,6 +9,7 @@ A production-ready Express.js + TypeScript backend for handling investor form su
 - Supabase PostgreSQL via Prisma ORM
 - Nodemailer (Gmail SMTP) for email notifications
 - Zod for server-side validation
+- Required company field for investor submissions
 - Rate limiting, input sanitization, CORS, and security best practices
 - Structured error handling and logging
 - Health check and graceful shutdown
@@ -68,7 +69,9 @@ src/
   {
     "fullName": "John Doe",
     "phoneNumber": "+1234567890",
-    "investmentPackage": "Starter",
+    "company": "Tech Corp",
+    "sharesQuantity": 100,
+    "calculatedTotal": 5000,
     "city": "New York"
   }
   ```
@@ -125,7 +128,9 @@ curl -X POST http://localhost:4000/api/investor-form \
   -d '{
     "fullName": "Jane Smith",
     "phoneNumber": "+15551234567",
-    "investmentPackage": "Starter",
+    "company": "Tech Corp",
+    "sharesQuantity": 100,
+    "calculatedTotal": 5000,
     "city": "San Francisco"
   }'
 ```
@@ -135,6 +140,7 @@ curl -X POST http://localhost:4000/api/investor-form \
 
 ### Error Scenarios
 - Missing fields: Returns 400 with validation errors
+- Missing company: Returns 400 with "Company is required" error
 - Invalid phone: Returns 400 with phone format error
 - Too many requests: Returns 429
 - Missing env vars: Server will not start
@@ -268,7 +274,9 @@ src/
     {
       "fullName": "John Doe",
       "phoneNumber": "+1234567890",
-      "investmentPackage": "Starter",
+      "company": "Tech Corp",
+      "sharesQuantity": 100,
+      "calculatedTotal": 5000,
       "city": "New York"
     }
     ```

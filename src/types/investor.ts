@@ -1,6 +1,7 @@
 export interface InvestorForm {
   fullName: string;
   phoneNumber?: string;
+  company: string;
   sharesQuantity?: number;
   calculatedTotal?: number;
   city: string;
@@ -10,6 +11,7 @@ export interface InvestorAdmin {
   id: string;
   fullName: string;
   phoneNumber?: string | null;
+  company?: string | null;
   sharesQuantity?: number | null;
   calculatedTotal?: number | null;
   city: string;
