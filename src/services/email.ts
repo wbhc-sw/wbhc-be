@@ -6,7 +6,7 @@ type EmailInvestor = {
   id: string;
   fullName: string;
   phoneNumber: string | null;
-  company: string | null;
+  companyID: number | null;
   sharesQuantity: number | null;
   calculatedTotal: number | null;
   city: string;
@@ -43,8 +43,8 @@ const transporter = nodemailer.createTransport({
 export async function sendAdminNotification(investor: EmailInvestor) {
   const mailOptions = {
     from: {
-      name: investor.company  || 'emails.ts 33',
-      address: EMAIL_SERVICE_USER || 'emails.ts 34'
+      name: COMPANY_NAME || 'Investor Form System',
+      address: EMAIL_SERVICE_USER || 'noreply@system.com'
     },
     to: COMPANY_ADMIN_EMAIL,
     subject: `استفسار مستثمر جديد - ${investor.fullName}`,
@@ -72,7 +72,7 @@ export async function sendAdminNotification(investor: EmailInvestor) {
                 <b>رقم الجوال:</b>
                 <span dir="ltr" style="unicode-bidi: embed;">${investor.phoneNumber || 'غير متوفر'}</span>
                 </li>
-                <li style="margin-bottom: 8px;"><b>الشركة:</b> ${investor.company || 'غير متوفر'}</li>
+                <li style="margin-bottom: 8px;"><b>رقم الشركة:</b> ${investor.companyID || 'غير متوفر'}</li>
                 <li style="margin-bottom: 8px;"><b>عدد الأسهم:</b> ${investor.sharesQuantity}</li>
                 <li style="margin-bottom: 8px;"><b>إجمالي المبلغ:</b> ${investor.calculatedTotal}</li>
                 <li style="margin-bottom: 8px;"><b>المدينة:</b> ${investor.city}</li>

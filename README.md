@@ -1,714 +1,874 @@
 # Investor Form Backend
 
-A production-ready Express.js + TypeScript backend for handling investor form submissions, with Supabase (PostgreSQL), Prisma ORM, Nodemailer email notifications, Zod validation, and robust security.
+A production-ready Express.js + TypeScript backend for handling investor form submissions with advanced lead management capabilities. Built with Supabase (PostgreSQL), Prisma ORM, Nodemailer email notifications, Zod validation, and enterprise-grade security.
 
 ---
 
 ## 🚀 Features
-- Express.js with TypeScript
-- Supabase PostgreSQL via Prisma ORM
-- Nodemailer (Gmail SMTP) for email notifications
-- Zod for server-side validation
-- Required company field for investor submissions
-- Rate limiting, input sanitization, CORS, and security best practices
-- Structured error handling and logging
-- Health check and graceful shutdown
+
+### Core Functionality
+- **Express.js with TypeScript** - Modern, type-safe backend development
+- **Supabase PostgreSQL** via Prisma ORM - Scalable database with type-safe queries
+- **Nodemailer (Gmail SMTP)** - Professional email notifications with Arabic RTL support
+- **Zod validation** - Robust server-side input validation and sanitization
+- **Company management system** - Full CRUD operations with auto-incrementing integer IDs
+- **Enhanced investor form** - Company selection with integer-based company IDs
+- **Advanced lead management** - Two-tier system for public submissions and admin leads
+
+### Security & Performance
+- **Rate limiting** - 5 requests/minute per IP with configurable limits
+- **Input sanitization** - XSS protection for all user inputs
+- **CORS protection** - Whitelisted origins with credentials support
+- **JWT authentication** - Secure admin access with HttpOnly cookies
+- **Helmet security headers** - Protection against common web vulnerabilities
+- **Centralized error handling** - Consistent error responses across all endpoints
+
+### Admin Features
+- **Lead transfer system** - Move public submissions to admin management
+- **Lead status tracking** - Track calling times, notes, and lead status
+- **Investment analytics** - Statistics and reporting capabilities
+- **Email tracking** - Monitor email delivery status
+- **Secure admin dashboard** - Protected endpoints for lead management
 
 ---
 
 ## 🛠️ Setup & Installation
 
+### Prerequisites
+- Node.js 18+ 
+- PostgreSQL database (Supabase recommended)
+- Gmail account for SMTP
+
+### Quick Start
 1. **Clone the repository**
-2. **Install dependencies:**
-   ```sh
+   ```bash
+   git clone <repository-url>
+   cd investor-form-backend
+   ```
+
+2. **Install dependencies**
+   ```bash
    npm install
    ```
-3. **Configure environment variables:**
-   - Copy `.env.example` to `.env` and fill in your values.
-4. **Set up the database:**
-   ```sh
+
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. **Set up the database**
+   ```bash
    npx prisma generate
    npx prisma db push
-   npx prisma studio # (optional, to view/manage data)
+   npx prisma studio  # Optional: View/manage data
    ```
-5. **Run the development server:**
-   ```sh
+
+5. **Run the development server**
+   ```bash
    npm run dev
    ```
 
 ---
 
 ## 📦 Project Structure
+
 ```
-src/
-├── index.ts
-├── routes/
-│   └── investor.ts
-├── middleware/
-│   ├── validation.ts
-│   ├── rateLimiter.ts
-│   └── errorHandler.ts
-├── services/
-│   ├── database.ts
-│   ├── email.ts
-│   └── validation.ts
-├── types/
-│   └── investor.ts
-└── utils/
-    └── constants.ts
+investor-form-backend/
+├── src/
+│   ├── index.ts                 # Main server entry point
+│   ├── routes/
+│   │   ├── investor.ts          # Public investor form API
+│   │   ├── investorAdmin.ts     # Admin lead management API
+│   │   ├── admin.ts             # Admin authentication API
+│   │   └── company.ts           # Company management API
+│   ├── middleware/
+│   │   ├── validation.ts        # Zod validation schemas
+│   │   ├── jwtAuth.ts           # JWT authentication middleware
+│   │   ├── rateLimiter.ts       # Rate limiting middleware
+│   │   └── errorHandler.ts      # Centralized error handling
+│   ├── services/
+│   │   ├── database.ts          # Prisma client instance
+│   │   ├── email.ts             # Email notification service
+│   │   └── validation.ts        # Environment variable validation
+│   ├── types/
+│   │   └── investor.ts          # TypeScript type definitions
+│   └── utils/
+│       └── constants.ts         # Project constants
+├── prisma/
+│   ├── schema.prisma            # Database schema definition
+│   └── migrations/              # Database migration files
+├── dist/                        # Compiled JavaScript output
+├── logo_grab.png               # Company logo for emails
+├── footer.png                  # Footer image for emails
+└── package.json                # Project dependencies and scripts
 ```
 
 ---
 
 ## 📝 API Documentation
 
-### POST `/api/investor-form`
-- **Description:** Submit investor inquiry form
-- **Request Body:**
-  ```json
-  {
-    "fullName": "John Doe",
-    "phoneNumber": "+1234567890",
-    "company": "Tech Corp",
-    "sharesQuantity": 100,
-    "calculatedTotal": 5000,
-    "city": "New York"
+### Public Endpoints
+
+#### POST `/api/investor-form`
+Submit a new investor inquiry form.
+
+**Request Body:**
+```json
+{
+  "fullName": "John Doe",
+  "phoneNumber": "+1234567890",
+  "companyID": "1",
+  "sharesQuantity": 100,
+  "calculatedTotal": 5000,
+  "city": "New York"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Submission received",
+  "data": {
+    "id": "uuid",
+    "createdAt": "2024-06-01T12:00:00.000Z"
   }
-  ```
-- **Success Response:**
-  ```json
-  {
-    "success": true,
-    "message": "Submission received",
-    "data": {
-      "id": "uuid",
-      "createdAt": "2024-06-01T12:00:00.000Z"
-    }
-  }
-  ```
-- **Validation Error Response:**
-  ```json
-  {
-    "success": false,
-    "error": "Validation failed",
-    "details": [
-      { "path": ["fullName"], "message": "Full Name must be at least 2 characters" }
-    ]
-  }
-  ```
-- **Rate Limit Error:**
-  ```json
-  {
-    "success": false,
-    "error": "Too many requests, please try again later."
-  }
-  ```
-
-### Health Check
-- **GET `/health`**
-  - Returns `{ status: 'ok', message: 'API is healthy' }`
-
----
-
-## 🔒 Security 
-- CORS: Only allows requests from your frontend URL
-- Rate limiting: 5 requests/minute per IP
-- Input sanitization: Prevents XSS
-- Helmet: Sets secure HTTP headers
-- Centralized error handling
-
----
-
-## 🧪 Testing Guide
-
-### Using curl
-```sh
-curl -X POST http://localhost:4000/api/investor-form \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fullName": "Jane Smith",
-    "phoneNumber": "+15551234567",
-    "company": "Tech Corp",
-    "sharesQuantity": 100,
-    "calculatedTotal": 5000,
-    "city": "San Francisco"
-  }'
+}
 ```
 
-### Using Postman
-- Import the endpoint and use the sample request body above.
-
-### Error Scenarios
-- Missing fields: Returns 400 with validation errors
-- Missing company: Returns 400 with "Company is required" error
-- Invalid phone: Returns 400 with phone format error
-- Too many requests: Returns 429
-- Missing env vars: Server will not start
-
----
-
-## ⚙️ Deployment
-- Deploy on Railway, Render, or similar
-- Set all environment variables in your deployment dashboard
-- Ensure CORS is set to your frontend domain
-
----
-
-## 🧩 Environment Variables
-See `.env.example` for all required variables.
-
----
-
-## 📝 Notes
-- Emails are sent to the company admin (no investor email field)
-- Prisma manages DB schema and migrations
-- All responses are JSON and compatible with Next.js frontend
-
----
-
-## 📚 Further Improvements
-- Add investor email field for direct confirmation
-- Add admin dashboard for submissions
-- Add authentication for admin endpoints
-
----
-
-## 👨‍💻 Author & License
-- MIT License 
-
-## JWT Authentication Setup
-
-### 1. Environment Variables
-Add the following to your `.env` file:
-
-```
-JWT_SECRET=your-very-strong-secret
-ADMIN_USERNAME=your-admin-username
-ADMIN_PASSWORD_HASH=your-bcrypt-hash
-```
-
-- Generate `ADMIN_PASSWORD_HASH` using bcryptjs:
-  ```js
-  // Run this in a Node.js REPL or script
-  const bcrypt = require('bcryptjs');
-  bcrypt.hash('your-password', 12).then(console.log);
-  ```
-  Copy the output to `ADMIN_PASSWORD_HASH` in your `.env`.
-
-### 2. Endpoints
-- `POST /api/admin/login` — Accepts `{ username, password }` and returns `{ token }` if valid.
-- All `/api/investor-form` routes are now protected and require a valid JWT in the `Authorization: Bearer <token>` header.
-
-### 3. Dependencies
-Install required packages:
-```
-npm install jsonwebtoken bcryptjs @types/jsonwebtoken @types/bcryptjs --save
-```
-
-### 4. Usage
-- Login as admin to get a JWT token.
-- Use the token in the `Authorization` header to access protected routes. 
-
----
-
-# 📖 Comprehensive Project Analysis & Documentation
-
-## Overview
-
-**Investor Form Backend** is a production-ready Express.js + TypeScript backend designed to handle investor inquiry form submissions. It is built with a focus on security, validation, and reliability, and is intended to be used as the backend for a web-based investor inquiry form.
-
-### Key Technologies
-
-- **Express.js** (with TypeScript): Web server and routing
-- **Prisma ORM**: Database access and schema management (PostgreSQL via Supabase)
-- **Nodemailer**: Email notifications (Gmail SMTP)
-- **Zod**: Input validation
-- **Security**: Helmet, CORS, rate limiting, input sanitization (XSS)
-- **JWT Authentication**: For admin endpoints
-
----
-
-## Features
-
-- **Investor Form Submission**: Accepts investor details, validates, stores in DB, and notifies admin via email.
-- **Admin Authentication**: JWT-based login for admin endpoints.
-- **Health Check Endpoint**: For monitoring and deployment readiness.
-- **Security Best Practices**: CORS, rate limiting, input sanitization, secure headers.
-- **Centralized Error Handling**: Consistent error responses.
-- **Environment Variable Validation**: Ensures all required configuration is present at startup.
-
----
-
-## Project Structure
-
-```
-src/
-├── index.ts                # Main server entry point
-├── routes/
-│   ├── investor.ts         # Investor form API routes
-│   └── admin.ts            # Admin authentication routes
-├── middleware/
-│   ├── errorHandler.ts     # Centralized error handler
-│   ├── jwtAuth.ts          # JWT authentication middleware
-│   ├── rateLimiter.ts      # Rate limiting middleware
-│   └── validation.ts       # Zod validation schema
-├── services/
-│   ├── database.ts         # Prisma client instance
-│   ├── email.ts            # Email sending logic
-│   └── validation.ts       # Environment variable validation
-├── types/
-│   └── investor.ts         # TypeScript types for investor form
-└── utils/
-    └── constants.ts        # Project-wide constants
-```
-
----
-
-## API Endpoints
-
-### 1. Investor Form Submission
-
-- **POST `/api/investor-form`**
-  - **Request Body:**
-    ```json
+**Validation Error (400):**
+```json
+{
+  "success": false,
+  "error": "Validation failed",
+  "details": [
     {
-      "fullName": "John Doe",
-      "phoneNumber": "+1234567890",
-      "company": "Tech Corp",
-      "sharesQuantity": 100,
-      "calculatedTotal": 5000,
-      "city": "New York"
+      "path": ["company"],
+      "message": "Company is required"
     }
-    ```
-  - **Success Response:**
-    ```json
-    {
-      "success": true,
-      "message": "Submission received",
-      "data": {
-        "id": "uuid",
-        "createdAt": "2024-06-01T12:00:00.000Z"
-      }
-    }
-    ```
-  - **Validation Error Response:**
-    ```json
-    {
-      "success": false,
-      "error": "Validation failed",
-      "details": [
-        { "path": ["fullName"], "message": "Full Name must be at least 2 characters" }
-      ]
-    }
-    ```
-  - **Rate Limit Error:**
-    ```json
-    {
-      "success": false,
-      "error": "Too many requests, please try again later."
-    }
-    ```
-
-### 2. Admin Authentication
-
-- **POST `/api/admin/login`**
-  - **Request Body:**
-    ```json
-    {
-      "username": "admin",
-      "password": "your-password"
-    }
-    ```
-  - **Success Response:**
-    ```json
-    {
-      "success": true,
-      "token": "jwt-token"
-    }
-    ```
-  - **Error Response:** Invalid credentials or missing fields.
-
-### 3. Health Check
-
-- **GET `/health`**
-  - **Response:**
-    ```json
-    { "status": "ok", "message": "API is healthy" }
-    ```
-
----
-
-## Security
-
-- **CORS**: Only allows requests from whitelisted frontend URLs.
-- **Rate Limiting**: 5 requests/minute per IP.
-- **Input Sanitization**: Prevents XSS via the `xss` package.
-- **Helmet**: Sets secure HTTP headers.
-- **JWT Authentication**: Protects admin endpoints.
-- **Centralized Error Handling**: All errors are caught and returned in a consistent JSON format.
-
----
-
-## Database Schema
-
-**Prisma Model: `Investor`**
-- `id`: UUID (primary key)
-- `fullName`: String
-- `phoneNumber`: String (optional)
-- `investmentPackage`: String
-- `city`: String
-- `submissionStatus`: String (default: "received")
-- `createdAt`: DateTime (auto)
-- `updatedAt`: DateTime (auto)
-- `emailSentToAdmin`: Boolean (default: false)
-- `emailSentToInvestor`: Boolean (default: false)
-
----
-
-## Email Notifications
-
-- **Admin Notification**: When a new investor form is submitted, an email is sent to the company admin with the details.
-- **Investor Confirmation**: (Planned) Confirmation email to the investor (currently not implemented).
-
----
-
-## Environment Variables
-
-Required variables (see `.env.example`):
-
-- `DATABASE_URL`
-- `EMAIL_SERVICE_USER`
-- `EMAIL_SERVICE_PASS`
-- `COMPANY_ADMIN_EMAIL`
-- `COMPANY_NAME`
-- `FRONTEND_URL`
-- `JWT_SECRET`
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD_HASH`
-
----
-
-## Setup & Installation
-
-1. Clone the repository.
-2. Install dependencies: `npm install`
-3. Configure environment variables: Copy `.env.example` to `.env` and fill in your values.
-4. Set up the database:
-   - `npx prisma generate`
-   - `npx prisma db push`
-   - `npx prisma studio` (optional)
-5. Run the development server: `npm run dev`
-
----
-
-## Testing
-
-- Use `curl` or Postman to test the `/api/investor-form` endpoint.
-- Test admin login via `/api/admin/login`.
-- Check `/health` for server status.
-
----
-
-## Deployment
-
-- Deploy on platforms like Railway, Render, or similar.
-- Set all environment variables in your deployment dashboard.
-- Ensure CORS is set to your frontend domain.
-
----
-
-## Further Improvements (from README)
-
-- Add investor email field for direct confirmation.
-- Add admin dashboard for submissions.
-- Add authentication for admin endpoints.
-
----
-
-## Summary Diagram
-
-```mermaid
-flowchart TD
-    A[Frontend Investor Form] -- POST /api/investor-form --> B[Express Backend]
-    B -- Validate & Sanitize --> C[Zod Validation & XSS Filter]
-    C -- Store --> D[Prisma ORM / PostgreSQL]
-    D -- Notify --> E[Nodemailer: Admin Email]
-    B -- JWT Auth --> F[Admin Login /api/admin/login]
-    F -- JWT Token --> B
-    B -- GET /health --> G[Health Check]
+  ]
+}
 ```
 
----
+#### GET `/health`
+Health check endpoint for monitoring.
 
-## Conclusion
-
-This backend is a robust, secure, and production-ready solution for handling investor form submissions, with a clear structure and best practices in place for validation, security, and maintainability. It is easily extensible for future features such as investor email confirmations and admin dashboards.
-
-If you need a more detailed breakdown of any specific part (e.g., code walkthrough, security audit, or extension guide), let me know! 
-
-## Complete API Endpoints
-
-### 1. **POST `/api/investor-form`** - Submit New Investor Form
-- Public endpoint for form submissions
-- Validates input, stores in DB, sends admin email
-
-### 2. **GET `/api/investor-form`** - Retrieve All Submissions  
-- **Protected endpoint** (requires JWT authentication)
-- Returns list of all investor submissions
-- Includes all fields: id, fullName, phoneNumber, investmentPackage, city, submissionStatus, timestamps, email tracking
-
-### 3. **POST `/api/admin/login`** - Admin Authentication
-- Generates JWT token for admin access
-- Required for accessing the GET endpoint
-
-### 4. **GET `/health`** - Health Check
-- Public monitoring endpoint
-
-## Updated Architecture Flow
-The diagram now makes complete sense - you have a full CRUD-like system where:
-- **Public users** can submit forms (POST)
-- **Admins** can authenticate and view all submissions (GET)
-- **System monitoring** via health checks
-
-This is a well-rounded backend that supports both the public-facing form submission and admin management functionality. The JWT authentication properly protects the sensitive GET endpoint that retrieves all investor data.
-
-Is this GET endpoint part of an admin dashboard you're building, or are you planning to create one? This setup would work perfectly for an admin interface to manage and review investor inquiries. 
-
-## InvestorAdmin API Documentation
-
----
-
-### 1. Get All Admin Leads
-
-**Endpoint:**
+**Response:**
+```json
+{
+  "status": "ok",
+  "message": "API is healthy"
+}
 ```
-GET /api/admin/investor-admin
-```
-**Headers:**
-- Authorization: Bearer <admin-jwt-token>
 
-**Response Example:**
+### Admin Endpoints (JWT Protected)
+
+#### POST `/api/admin/login`
+Authenticate as admin user.
+
+**Request Body:**
+```json
+{
+  "username": "admin",
+  "password": "your-password"
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true
+}
+```
+*Note: JWT token is set as HttpOnly cookie*
+
+#### POST `/api/admin/logout`
+Logout and clear authentication cookie.
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+#### GET `/api/investor-form`
+Retrieve all public investor submissions (admin only).
+
+**Response:**
 ```json
 {
   "success": true,
   "data": [
     {
       "id": "uuid",
-      "fullName": "Jane Smith",
-      "phoneNumber": "+15551234567",
-      "investmentPackage": "Pro",
-      "city": "San Francisco",
+      "fullName": "John Doe",
+      "phoneNumber": "+1234567890",
+      "companyID": "1",
+      "sharesQuantity": 100,
+      "calculatedTotal": 5000,
+      "city": "New York",
       "submissionStatus": "received",
-      "createdAt": "2025-07-14T13:07:54.666Z",
-      "updatedAt": "2025-07-14T13:07:54.666Z",
-      "emailSentToAdmin": false,
-      "emailSentToInvestor": false,
-      "notes": "VIP lead",
-      "callingTimes": 0,
-      "leadStatus": "new",
-      "originalInvestorId": "original-investor-uuid"
+      "createdAt": "2024-06-01T12:00:00.000Z",
+      "updatedAt": "2024-06-01T12:00:00.000Z",
+      "emailSentToAdmin": true,
+      "emailSentToInvestor": false
     }
   ]
 }
 ```
 
----
+### Admin Lead Management Endpoints
 
-### 2. Create a New Admin Lead
+#### GET `/api/admin/investor-admin`
+Retrieve all admin leads.
 
-**Endpoint:**
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "fullName": "John Doe",
+      "phoneNumber": "+1234567890",
+      "companyID": "1",
+      "sharesQuantity": 100,
+      "calculatedTotal": 5000,
+      "investmentAmount": 5000,
+      "city": "New York",
+      "submissionStatus": "received",
+      "notes": "VIP lead",
+      "callingTimes": 2,
+      "leadStatus": "contacted",
+      "originalInvestorId": "original-uuid",
+      "createdAt": "2024-06-01T12:00:00.000Z",
+      "updatedAt": "2024-06-01T12:00:00.000Z",
+      "emailSentToAdmin": true,
+      "emailSentToInvestor": false
+    }
+  ]
+}
 ```
-POST /api/admin/investor-admin
-```
-**Headers:**
-- Authorization: Bearer <admin-jwt-token>
-- Content-Type: application/json
 
-**Request Body Example:**
+#### POST `/api/admin/investor-admin`
+Create a new admin lead.
+
+**Request Body:**
 ```json
 {
   "fullName": "Jane Smith",
   "phoneNumber": "+15551234567",
-  "investmentPackage": "Pro",
+  "companyID": "2",
+  "sharesQuantity": 200,
+  "calculatedTotal": 10000,
+  "investmentAmount": 10000,
   "city": "San Francisco",
-  "notes": "VIP lead",
+  "notes": "High potential lead",
   "callingTimes": 0,
-  "leadStatus": "new",
-  "originalInvestorId": "original-investor-uuid"
+  "leadStatus": "new"
 }
 ```
 
-**Response Example:**
+#### PUT `/api/admin/investor-admin/:id`
+Update an existing admin lead.
+
+**Request Body:**
 ```json
 {
-  "success": true,
-  "data": { /* ...created record... */ }
+  "notes": "Called twice, interested in follow-up",
+  "callingTimes": 2,
+  "leadStatus": "contacted",
+  "investmentAmount": 15000
 }
 ```
 
----
+#### POST `/api/admin/investor-admin/transfer/:investorId`
+Transfer a public investor submission to admin lead management.
 
-### 3. Update an Admin Lead
-
-**Endpoint:**
-```
-PUT /api/admin/investor-admin/:id
-```
-**Headers:**
-- Authorization: Bearer <admin-jwt-token>
-- Content-Type: application/json
-
-**Request Body Example:**
+**Request Body:**
 ```json
 {
-  "notes": "Called, not interested",
-  "callingTimes": 1,
-  "leadStatus": "not_interested"
+  "notes": "Initial admin notes about this lead"
 }
 ```
 
-**Response Example:**
-```json
-{
-  "success": true,
-  "data": { /* ...updated record... */ }
-}
-```
-
----
-
-### 4. Transfer Public Investor to Admin Lead
-
-**Endpoint:**
-```
-POST /api/admin/investor-admin/transfer/:investorId
-```
-- `:investorId` is the `id` of the public `Investor` you want to promote.
-
-**Headers:**
-- Authorization: Bearer <admin-jwt-token>
-- Content-Type: application/json
-
-**Request Body Example:**
-```json
-{
-  "notes": "Initial notes about this lead (optional)"
-}
-```
-
-**Success Response Example:**
+**Success Response:**
 ```json
 {
   "success": true,
   "data": {
-    "id": "new-uuid",
+    "id": "new-admin-lead-uuid",
     "fullName": "John Doe",
-    "phoneNumber": "+1234567890",
-    "investmentPackage": "Starter",
-    "city": "New York",
-    "submissionStatus": "received",
-    "notes": "Initial notes about this lead",
+    "companyID": "1",
+    "notes": "Initial admin notes about this lead",
     "callingTimes": 0,
     "leadStatus": "new",
-    "originalInvestorId": "original-investor-uuid",
+    "originalInvestorId": "original-investor-uuid"
+  }
+}
+```
+
+#### GET `/api/admin/investor-admin/statistics`
+Get investment amount statistics.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_max": { "investmentAmount": 50000 },
+    "_min": { "investmentAmount": 1000 },
+    "_avg": { "investmentAmount": 15000 },
+    "_sum": { "investmentAmount": 300000 },
+    "_count": { "investmentAmount": 20 }
+  }
+}
+```
+
+### Company Management Endpoints (Admin Only)
+
+#### GET `/api/admin/company`
+Retrieve all companies (admin access required).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "companyID": 1,
+      "name": "Tech Corp",
+      "description": "Technology company specializing in software development",
+      "phoneNumber": "+1234567890",
+      "url": "https://techcorp.com",
+      "createdAt": "2024-06-01T12:00:00.000Z",
+      "updatedAt": "2024-06-01T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+#### GET `/api/admin/company/:companyID`
+Retrieve a specific company by companyID (admin access required).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "companyID": 1,
+    "name": "Tech Corp",
+    "description": "Technology company specializing in software development",
+    "phoneNumber": "+1234567890",
+    "url": "https://techcorp.com",
     "createdAt": "2024-06-01T12:00:00.000Z",
     "updatedAt": "2024-06-01T12:00:00.000Z"
   }
 }
 ```
 
-**Error Responses:**
-- 404 Not Found:
-  ```json
-  { "success": false, "error": "Investor not found" }
-  ```
-- 409 Conflict:
-  ```json
-  { "success": false, "error": "Investor already transferred" }
-  ```
+**Error Response (404):**
+```json
+{
+  "success": false,
+  "error": "Company not found"
+}
+```
+
+#### POST `/api/admin/company`
+Create a new company (admin only - requires JWT authentication).
+
+**Request Body:**
+```json
+{
+  "name": "New Company",
+  "description": "Company description",
+  "phoneNumber": "+1234567890",
+  "url": "https://newcompany.com"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "companyID": 5,
+    "name": "New Company",
+    "description": "Company description",
+    "phoneNumber": "+1234567890",
+    "url": "https://newcompany.com",
+    "createdAt": "2024-06-01T12:00:00.000Z",
+    "updatedAt": "2024-06-01T12:00:00.000Z"
+  }
+}
+```
+
+**Key Benefits:**
+- **No manual ID generation** - System auto-assigns sequential integers (1, 2, 3, 4, 5...)
+- **Better user experience** - Frontend just sends company info, backend handles IDs
+- **No conflicts** - Each company gets a unique auto-incrementing ID
+- **Cleaner data** - Integer IDs are easier to work with than UUIDs
+
+#### PUT `/api/admin/company/:companyID`
+Update an existing company (admin only).
+
+**Request Body:**
+```json
+{
+  "name": "Updated Company Name",
+  "description": "Updated description",
+  "phoneNumber": "+1987654321",
+  "url": "https://updatedcompany.com"
+}
+```
+
+#### DELETE `/api/admin/company/:companyID`
+Delete a company (admin only).
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "companyID": 1,
+    "name": "Deleted Company",
+    "description": "Company description",
+    "phoneNumber": "+1234567890",
+    "url": "https://deletedcompany.com",
+    "createdAt": "2024-06-01T12:00:00.000Z",
+    "updatedAt": "2024-06-01T12:00:00.000Z"
+  }
+}
+```
 
 ---
+
+## 🗄️ Database Schema
+
+### Company Model (Company Management)
+```prisma
+model Company {
+  companyID    Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  phoneNumber  String?
+  url          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relationships
+  investors    Investor[]
+  investorAdmins InvestorAdmin[]
+
+  @@index([name])
+  @@index([createdAt])
+}
+```
+
+### Investor Model (Public Submissions)
+```prisma
+model Investor {
+  id                    String   @id @default(uuid())
+  fullName              String
+  phoneNumber           String?
+  companyID             Int?
+  sharesQuantity        Int?
+  calculatedTotal       Float?
+  city                  String
+  submissionStatus      String   @default("received")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  emailSentToAdmin      Boolean  @default(false)
+  emailSentToInvestor   Boolean  @default(false)
+
+  // Relationship
+  company               Company? @relation(fields: [companyID], references: [companyID])
+
+  @@index([sharesQuantity])
+  @@index([createdAt])
+  @@index([companyID])
+}
+```
+
+### InvestorAdmin Model (Admin Leads)
+```prisma
+model InvestorAdmin {
+  id                  String   @id @default(uuid())
+  fullName            String
+  phoneNumber         String?
+  companyID           Int?
+  sharesQuantity      Int?
+  calculatedTotal     Float?
+  investmentAmount    Float?
+  city                String
+  submissionStatus    String   @default("received")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  emailSentToAdmin    Boolean  @default(false)
+  emailSentToInvestor Boolean  @default(false)
+  notes               String?
+  callingTimes        Int      @default(0)
+  leadStatus          String   @default("new")
+  originalInvestorId  String?
+
+  // Relationship
+  company             Company? @relation(fields: [companyID], references: [companyID])
+
+  @@index([sharesQuantity])
+  @@index([createdAt])
+  @@index([leadStatus])
+  @@index([companyID])
+}
+```
+
+**Key Schema Features:**
+- **Auto-incrementing company IDs** - No manual ID generation needed
+- **Proper foreign key relationships** - Company → Investor/InvestorAdmin
+- **Optional company association** - Investors can be created without company
+- **Indexed fields** - Optimized queries for common operations
+
+---
+
+## 🔒 Security Features
 
 ### Authentication
-All endpoints require a valid admin JWT token in the `Authorization` header:
+- **JWT tokens** stored in HttpOnly cookies
+- **Secure cookie attributes** (SameSite, Secure in production)
+- **Bcrypt password hashing** for admin credentials
+- **Token expiration** (24 hours)
+
+### Input Protection
+- **Zod validation** for all API inputs
+- **XSS sanitization** for string inputs
+- **Rate limiting** (5 requests/minute per IP)
+- **CORS with whitelisted origins**
+
+### Data Security
+- **Prisma ORM** prevents SQL injection
+- **Environment variable validation** at startup
+- **Centralized error handling** (no sensitive data leakage)
+- **Helmet security headers**
+
+---
+
+## 📧 Email System
+
+### Features
+- **Arabic RTL support** for email templates
+- **Professional branding** with company logos
+- **Admin notifications** for new submissions
+- **Gmail SMTP integration**
+- **Email delivery tracking**
+
+### Email Template
+- **Responsive design** with modern styling
+- **Company branding** with logo and footer
+- **Complete investor details** including company information
+- **Arabic language support** for Middle Eastern markets
+
+---
+
+## 🧪 Testing
+
+### Using curl
+```bash
+# Test public form submission
+curl -X POST http://localhost:4000/api/investor-form \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullName": "Jane Smith",
+    "phoneNumber": "+15551234567",
+    "companyID": "1",
+    "sharesQuantity": 100,
+    "calculatedTotal": 5000,
+    "city": "San Francisco"
+  }'
+
+# Test admin login
+curl -X POST http://localhost:4000/api/admin/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "your-password"
+  }' \
+  -c cookies.txt
+
+# Test protected endpoint
+curl -X GET http://localhost:4000/api/admin/investor-admin \
+  -b cookies.txt
+
+# Test company endpoints
+curl -X GET http://localhost:4000/api/admin/company
+
+curl -X POST http://localhost:4000/api/admin/company \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test Company",
+    "description": "A test company",
+    "phoneNumber": "+1234567890",
+    "url": "https://testcompany.com"
+  }' \
+  -b cookies.txt
 ```
-Authorization: Bearer <your-admin-jwt>
+
+### Using Postman
+
+#### Company API Testing in Postman
+
+**1. Get All Companies (Admin Only)**
+- **Method:** GET
+- **URL:** `http://localhost:4000/api/admin/company`
+- **Headers:** `Cookie: admin_jwt={your-jwt-token}`
+- **Expected Response:** List of all companies
+
+**2. Get Specific Company (Admin Only)**
+- **Method:** GET
+- **URL:** `http://localhost:4000/api/admin/company/{companyID}`
+- **Headers:** `Cookie: admin_jwt={your-jwt-token}`
+- **Expected Response:** Company details or 404 if not found
+
+**3. Create Company (Admin Only)**
+- **Method:** POST
+- **URL:** `http://localhost:4000/api/admin/company`
+- **Headers:** 
+  - `Content-Type: application/json`
+  - `Cookie: admin_jwt={your-jwt-token}`
+- **Body:**
+```json
+{
+  "name": "New Company",
+  "description": "Company description",
+  "phoneNumber": "+1234567890",
+  "url": "https://newcompany.com"
+}
+```
+
+**4. Update Company (Admin Only)**
+- **Method:** PUT
+- **URL:** `http://localhost:4000/api/admin/company/{companyID}`
+- **Headers:** 
+  - `Content-Type: application/json`
+  - `Cookie: admin_jwt={your-jwt-token}`
+- **Body:**
+```json
+{
+  "name": "Updated Company Name",
+  "description": "Updated description"
+}
+```
+
+**5. Delete Company (Admin Only)**
+- **Method:** DELETE
+- **URL:** `http://localhost:4000/api/admin/company/{companyID}`
+- **Headers:** `Cookie: admin_jwt={your-jwt-token}`
+- **Expected Response:** Success message
+
+#### Postman Setup Tips
+
+1. **Create a Collection** for "Investor Form Backend"
+2. **Set Environment Variables:**
+   - `base_url`: `http://localhost:4000`
+   - `admin_jwt`: Your JWT token after login
+3. **Use Pre-request Scripts** to automatically set cookies
+4. **Test Authentication First** with the admin login endpoint
+
+### Error Scenarios
+- **Missing required fields** → 400 with validation errors
+- **Invalid company ID format** → 400 with "Company ID must be a positive integer" error
+- **Invalid phone format** → 400 with phone format error
+- **Rate limit exceeded** → 429 with retry information
+- **Invalid credentials** → 401 with authentication error
+- **Missing environment variables** → Server startup failure
+- **Company not found** → 404 when referencing non-existent company ID
+
+---
+
+## ⚙️ Environment Variables
+
+### Required Variables
+```bash
+# Database
+DATABASE_URL="postgresql://user:pass@host:5432/dbname"
+
+# Email Configuration
+EMAIL_SERVICE_USER="your-email@gmail.com"
+EMAIL_SERVICE_PASS="your-app-password"
+COMPANY_ADMIN_EMAIL="admin@company.com"
+COMPANY_NAME="Your Company Name"
+
+# Frontend URLs (CORS)
+FRONTEND_URL="https://yourdomain.com"
+FRONTEND_2_URL="https://app.yourdomain.com"
+
+# Authentication
+JWT_SECRET="your-super-secure-jwt-secret"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD_HASH="bcrypt-hash-of-your-password"
+```
+
+### Optional Variables
+```bash
+# Server Configuration
+PORT=4000
+NODE_ENV=production
 ```
 
 ---
 
-### Testing Tips
-- Use Postman or curl to test each endpoint.
-- Always log in as admin (`POST /api/admin/login`) to get your JWT token.
-- For the transfer API, get a valid `investorId` from the public `Investor` table. 
+## 🚀 Deployment
 
-## 🛡️ Security Improvements
+### Supported Platforms
+- **Railway** - Easy deployment with automatic environment variable management
+- **Render** - Free tier available with PostgreSQL add-on
+- **Heroku** - Traditional deployment with PostgreSQL
+- **Vercel** - Serverless deployment option
+- **DigitalOcean** - VPS deployment with full control
 
-### 1. Secure Cookie-Based Authentication
-- Admin authentication now uses a JWT stored in an `HttpOnly` cookie (`admin_jwt`).
-- Cookie attributes:
-  - `HttpOnly: true` (not accessible via JavaScript, protects against XSS)
-  - `Secure: true` in production (only sent over HTTPS)
-  - `SameSite: 'lax'` (mitigates most CSRF attacks)
-  - `Path: '/'`
-  - `maxAge`: 24 hours
+### Deployment Steps
+1. **Set environment variables** in your deployment platform
+2. **Configure database** (Supabase recommended)
+3. **Set up email service** (Gmail SMTP)
+4. **Deploy the application**
+5. **Run database migrations** if needed
+6. **Test all endpoints** after deployment
 
-### 2. Authentication Middleware
-- All protected admin endpoints use middleware that reads the JWT from the `admin_jwt` cookie.
-- Requests without a valid cookie are rejected with `401 Unauthorized`.
-
-### 3. Logout Endpoint
-- `POST /api/admin/logout` clears the `admin_jwt` cookie using the same attributes as when it was set.
-
-### 4. CORS Configuration
-- Only allows requests from whitelisted origins (set via environment variables: `FRONTEND_URL`, `FRONTEND_2_URL`).
-- `credentials: true` is set, so cookies are sent/received cross-origin only from allowed frontends.
-
-### 5. Rate Limiting
-- Global rate limiting is enabled (default: 5 requests per minute per IP).
-- Helps prevent brute-force and abuse.
-
-### 6. Input Validation & Sanitization
-- All user input is validated using [zod](https://github.com/colinhacks/zod) schemas.
-- All string input is sanitized using [xss](https://www.npmjs.com/package/xss) to prevent XSS attacks.
-
-### 7. Environment Variable Validation
-- The server checks for all required environment variables at startup and will not run if any are missing.
-
-### 8. Secure HTTP Headers
-- [helmet](https://helmetjs.github.io/) is used to set secure HTTP headers.
-
-### 9. Error Handling
-- Centralized error handler returns clear, non-sensitive error messages.
-
-### 10. Database Security
-- Uses Prisma ORM to prevent SQL injection.
-- No raw SQL queries are used.
+### Production Considerations
+- **Use HTTPS** in production (required for secure cookies)
+- **Set NODE_ENV=production** for optimized performance
+- **Configure proper CORS origins** for your frontend domains
+- **Monitor rate limiting** and adjust as needed
+- **Set up logging** for production debugging
 
 ---
 
-## ⚠️ Developer Notes
+## 📊 Lead Management Workflow
 
-- **Never store JWTs or sensitive tokens in localStorage or sessionStorage.**
-- **Never use `*` as a CORS origin.** Always specify allowed origins.
-- **Always use `secure: true` for cookies in production.**
-- **Never commit `.env` files or secrets to version control.**
-- **If you change cookie attributes, always use the same attributes when clearing the cookie.**
-- **In production, always use HTTPS.** Secure cookies will not be sent over HTTP.
+### Public Submission Flow
+1. **Investor submits form** → Data stored in `Investor` table
+2. **Email notification sent** → Admin receives Arabic RTL email
+3. **Form confirmation** → Success response to investor
+4. **Admin reviews** → Lead appears in admin dashboard
+
+### Admin Lead Management Flow
+1. **Transfer public lead** → Move to `InvestorAdmin` table
+2. **Add notes and status** → Track communication history
+3. **Update calling times** → Monitor outreach efforts
+4. **Set lead status** → Track progression (new, contacted, interested, etc.)
+5. **Record investment amount** → Track actual investment values
+6. **Generate reports** → Use statistics endpoint for insights
 
 ---
 
-## 🔒 Security Summary Table
+## 🔧 Development Scripts
 
-| Area            | Best Practice Implemented                |
-|-----------------|-----------------------------------------|
-| Auth            | HttpOnly, Secure, SameSite cookies      |
-| CORS            | Whitelisted origins, credentials: true  |
-| Rate Limiting   | 5 req/min/IP (configurable)             |
-| Validation/XSS  | zod + xss                               |
-| Env Vars        | Validated at startup                    |
-| DB              | Prisma ORM                              |
-| Headers         | helmet                                  |
-| Error Handling  | Centralized                             |
+```bash
+# Development
+npm run dev          # Start development server with hot reload
+npm run build        # Compile TypeScript to JavaScript
+npm run start        # Start production server
 
---- 
+# Database
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push schema changes to database
+npm run db:studio    # Open Prisma Studio for data management
+
+# Testing
+npm test             # Run Jest tests
+```
+
+---
+
+## 📚 API Response Format
+
+### Success Response
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": { /* response data */ }
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "error": "Error description",
+  "details": [ /* validation errors */ ]
+}
+```
+
+---
+
+## 🎯 Use Cases
+
+This backend is ideal for:
+- **Investment companies** collecting investor inquiries
+- **Real estate developers** managing investor leads
+- **Startups** tracking investor interest and communication
+- **Financial services** with lead qualification workflows
+- **Companies in Middle Eastern markets** (Arabic email support)
+
+---
+
+## ✨ Recent Improvements
+
+### Company Management System
+- **✅ Auto-incrementing integer IDs** - No more manual ID generation or conflicts
+- **✅ Simplified company creation** - Frontend just sends company info, backend handles IDs
+- **✅ Proper database relationships** - Foreign key constraints between Company, Investor, and InvestorAdmin
+- **✅ Better user experience** - Clean integer IDs (1, 2, 3, 4, 5...) instead of complex UUIDs
+
+### Enhanced API Design
+- **✅ Consistent company ID format** - All endpoints use integer company IDs
+- **✅ Improved validation** - Better error messages for company ID validation
+- **✅ Cleaner data structure** - Integer IDs are easier to work with and display
+
+### Frontend Integration Benefits
+- **✅ No ID conflicts** - Each company gets a unique sequential ID
+- **✅ Easier form handling** - Simple integer selection instead of UUID management
+- **✅ Better data display** - Clean company lists with sequential numbering
+
+---
+
+## 🔮 Future Enhancements
+
+- **Investor email confirmations** - Direct confirmation emails to investors
+- **Advanced analytics dashboard** - Real-time reporting and insights
+- **Multi-tenant support** - Multiple companies on single instance
+- **API rate limiting per user** - Individual user limits
+- **Audit logging** - Complete activity tracking
+- **Webhook integrations** - Third-party system integrations
+- **SMS notifications** - Text message alerts for urgent leads
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+---
+
+## 📞 Support
+
+For support and questions:
+- Create an issue in the repository
+- Contact the development team
+- Check the documentation for common solutions
+
+---
+
+*Built with ❤️ using Express.js, TypeScript, Prisma, and Supabase* 

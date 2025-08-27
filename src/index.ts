@@ -10,6 +10,7 @@ import adminRouter from './routes/admin';
 import { jwtAuth } from './middleware/jwtAuth';
 import { validateEnv } from './services/validation';
 import investorAdminRouter from './routes/investorAdmin';
+import companyRouter from './routes/company';
 import cookieParser from 'cookie-parser';
 // import { FRONTEND_URL } from './utils/constants';
 
@@ -57,6 +58,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/admin', adminRouter);
 app.use('/api/investor-form', investorRouter);
 app.use('/api/admin/investor-admin', investorAdminRouter);
+app.use('/api/admin/company', companyRouter);
 
 // Error handling middleware
 app.use(errorHandler);

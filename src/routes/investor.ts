@@ -26,7 +26,7 @@ router.post('/', async (req, res, next) => {
       data: {
         fullName: parsed.fullName,
         phoneNumber: parsed.phoneNumber,
-        company: parsed.company,
+        companyID: parsed.companyID,
         sharesQuantity: parsed.sharesQuantity,
         calculatedTotal: parsed.calculatedTotal,
         city: parsed.city,
