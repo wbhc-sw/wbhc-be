@@ -7,7 +7,7 @@ import xss from 'xss';
 const router = Router();
 
 // GET /api/admin/company - Retrieve all companies
-router.get('/', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const companies = await prisma.company.findMany({
       orderBy: { createdAt: 'desc' }
