@@ -24,8 +24,8 @@ const transporter = nodemailer_1.default.createTransport({
 async function sendAdminNotification(investor) {
     const mailOptions = {
         from: {
-            name: investor.company || 'emails.ts 33',
-            address: EMAIL_SERVICE_USER || 'emails.ts 34'
+            name: COMPANY_NAME || 'Investor Form System',
+            address: EMAIL_SERVICE_USER || 'noreply@system.com'
         },
         to: COMPANY_ADMIN_EMAIL,
         subject: `استفسار مستثمر جديد - ${investor.fullName}`,
@@ -53,7 +53,7 @@ async function sendAdminNotification(investor) {
                 <b>رقم الجوال:</b>
                 <span dir="ltr" style="unicode-bidi: embed;">${investor.phoneNumber || 'غير متوفر'}</span>
                 </li>
-                <li style="margin-bottom: 8px;"><b>الشركة:</b> ${investor.company || 'غير متوفر'}</li>
+                <li style="margin-bottom: 8px;"><b>رقم الشركة:</b> ${investor.companyID || 'غير متوفر'}</li>
                 <li style="margin-bottom: 8px;"><b>عدد الأسهم:</b> ${investor.sharesQuantity}</li>
                 <li style="margin-bottom: 8px;"><b>إجمالي المبلغ:</b> ${investor.calculatedTotal}</li>
                 <li style="margin-bottom: 8px;"><b>المدينة:</b> ${investor.city}</li>

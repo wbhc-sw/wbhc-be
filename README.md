@@ -702,6 +702,7 @@ COMPANY_NAME="Your Company Name"
 # Frontend URLs (CORS)
 FRONTEND_URL="https://yourdomain.com"
 FRONTEND_2_URL="https://app.yourdomain.com"
+FRONTEND_3_URL="https://app.yourseconddomain.com"
 
 # Authentication
 JWT_SECRET="your-super-secure-jwt-secret"

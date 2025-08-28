@@ -14,6 +14,7 @@ const investor_1 = __importDefault(require("./routes/investor"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const validation_1 = require("./services/validation");
 const investorAdmin_1 = __importDefault(require("./routes/investorAdmin"));
+const company_1 = __importDefault(require("./routes/company"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 // import { FRONTEND_URL } from './utils/constants';
 // Load environment variables
@@ -23,10 +24,10 @@ dotenv_1.default.config();
 (0, validation_1.validateEnv)();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
-const { FRONTEND_URL, FRONTEND_2_URL,
-// NODE_ENV
+const { FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL    
+// NODE_ENV 
  } = process.env;
-console.log([FRONTEND_URL, FRONTEND_2_URL].filter((url) => typeof url === 'string'));
+console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url) => typeof url === 'string'));
 // console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
 // console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
 // console.log('COMPANY_ADMIN_EMAIL:',   COMPANY_ADMIN_EMAIL);
@@ -35,7 +36,7 @@ console.log([FRONTEND_URL, FRONTEND_2_URL].filter((url) => typeof url === 'strin
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
-    origin: [FRONTEND_URL, FRONTEND_2_URL].filter((url) => typeof url === 'string'),
+    origin: [FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url) => typeof url === 'string'),
     credentials: true,
 }));
 app.use((0, helmet_1.default)());
@@ -50,6 +51,7 @@ app.get('/health', (req, res) => {
 app.use('/api/admin', admin_1.default);
 app.use('/api/investor-form', investor_1.default);
 app.use('/api/admin/investor-admin', investorAdmin_1.default);
+app.use('/api/admin/company', company_1.default);
 // Error handling middleware
 app.use(errorHandler_1.errorHandler);
 // Graceful shutdown
