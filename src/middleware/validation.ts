@@ -50,6 +50,8 @@ export const investorAdminUpdateSchema = z.object({
   submissionStatus: z.string().optional(),
   notes: z.string().optional(),
   investmentAmount: z.number().positive('Investment amount must be a positive number').optional(),
+  leadStatus: z.string().optional(),
+  callingTimes: z.number().int().min(0, 'Calling times must be non-negative').optional(),
 });
 
 export const companyCreateSchema = z.object({

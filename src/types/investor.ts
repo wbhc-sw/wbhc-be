@@ -17,13 +17,30 @@ export interface InvestorForm {
   city: string;
 }
 
+export interface Investor {
+  id: string;
+  fullName: string;
+  phoneNumber: string | null;
+  sharesQuantity: number | null;
+  calculatedTotal: number | null;
+  city: string;
+  submissionStatus: string;
+  createdAt: Date;
+  updatedAt: Date;
+  emailSentToAdmin: boolean;
+  emailSentToInvestor: boolean;
+  companyID: number | null;
+  transferred: boolean;
+  company?: Company | null;
+}
+
 export interface InvestorAdmin {
   id: string;
   fullName: string;
   phoneNumber: string | null;
   sharesQuantity: number | null;
   calculatedTotal: number | null;
-  investmentAmount: number | null;
+  // investmentAmount: number | null;
   city: string;
   submissionStatus: string;
   createdAt: Date;

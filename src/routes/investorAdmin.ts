@@ -59,46 +59,54 @@ router.put('/:id', jwtAuth, (req: Request, res: Response, next: NextFunction) =>
 });
 
 // POST /api/admin/investor-admin/transfer/:investorId
-router.post('/transfer/:investorId', jwtAuth, (req: Request, res: Response, next: NextFunction) => {
+router.post('/transfer/:investorId', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
   const { investorId } = req.params;
   const notes = req.body.notes ? xss(req.body.notes) : undefined;
 
-  prisma.investor.findUnique({ where: { id: investorId } })
-    .then(investor => {
-      if (!investor) {
-        res.status(404).json({ success: false, error: 'Investor not found' });
-        return;
-      }
-      return prisma.investorAdmin.findFirst({ where: { originalInvestorId: investorId } })
-        .then(existing => {
-          if (existing) {
-            res.status(409).json({ success: false, error: 'Investor already transferred' });
-            return;
-          }
-          return prisma.investorAdmin.create({
-            data: {
-              fullName: investor.fullName,
-              phoneNumber: investor.phoneNumber,
-              companyID: investor.companyID,
-              sharesQuantity: investor.sharesQuantity,
-              calculatedTotal: investor.calculatedTotal,
-              city: investor.city,
-              submissionStatus: investor.submissionStatus,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              emailSentToAdmin: false,
-              emailSentToInvestor: false,
-              notes,
-              callingTimes: 0,
-              leadStatus: 'new',
-              originalInvestorId: investor.id,
-            }
-          }).then(adminLead => {
-            res.status(201).json({ success: true, data: adminLead });
-          });
-        });
-    })
-    .catch(next);
+  try {
+    const investor = await prisma.investor.findUnique({ where: { id: investorId } });
+    if (!investor) {
+      res.status(404).json({ success: false, error: 'Investor not found' });
+      return;
+    }
+
+    const existing = await prisma.investorAdmin.findFirst({ where: { originalInvestorId: investorId } });
+    if (existing) {
+      res.status(409).json({ success: false, error: 'Investor already transferred' });
+      return;
+    }
+
+    // Create the admin lead AND update the investor's transferred status
+    const [adminLead] = await prisma.$transaction([
+      prisma.investorAdmin.create({
+        data: {
+          fullName: investor.fullName,
+          phoneNumber: investor.phoneNumber,
+          companyID: investor.companyID,
+          sharesQuantity: investor.sharesQuantity,
+          calculatedTotal: investor.calculatedTotal,
+          city: investor.city,
+          submissionStatus: investor.submissionStatus,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          emailSentToAdmin: false,
+          emailSentToInvestor: false,
+          notes,
+          callingTimes: 0,
+          leadStatus: 'new',
+          originalInvestorId: investor.id,
+        }
+      }),
+      prisma.investor.update({
+        where: { id: investorId },
+        data: { transferred: true }
+      })
+    ]);
+
+    res.status(201).json({ success: true, data: adminLead });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // GET /api/admin/investor-admin/statistics - Get investment amount statistics
