@@ -35,7 +35,7 @@ export interface Investor {
 }
 
 export interface InvestorAdmin {
-  id: string;
+  id: number; // Changed from string to number
   fullName: string;
   phoneNumber: string | null;
   sharesQuantity: number | null;
@@ -50,7 +50,7 @@ export interface InvestorAdmin {
   notes: string | null;
   callingTimes: number;
   leadStatus: string;
-  originalInvestorId: string | null;
+  originalInvestorId: string | null; // Keep as string since it references Investor.id
   companyID: number | null;
   company?: Company | null;
 }

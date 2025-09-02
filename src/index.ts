@@ -47,7 +47,7 @@ app.use(cors({
 }));
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(rateLimiter);
+app.use(rateLimiter); // This now excludes GET requests
 app.use(cookieParser());
 
 // Health check endpoint

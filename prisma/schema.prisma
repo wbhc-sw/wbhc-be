@@ -45,7 +45,7 @@ model Investor {
 }
 
 model InvestorAdmin {
-  id                  String   @id @default(uuid())
+  id                  Int      @id @default(autoincrement())
   fullName            String
   phoneNumber         String?
   city                String
