@@ -28,7 +28,7 @@ model Investor {
   fullName            String
   phoneNumber         String?
   city                String
-  submissionStatus    String   @default("received")
+  source              String   @default("received")
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   emailSentToAdmin    Boolean  @default(false)
@@ -45,11 +45,11 @@ model Investor {
 }
 
 model InvestorAdmin {
-  id                  BigInt   @id @unique @default(autoincrement())
+  id                  Int      @id @unique @default(autoincrement())
   fullName            String
   phoneNumber         String?
   city                String
-  submissionStatus    String   @default("received")
+  source              String   @default("received")
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   emailSentToAdmin    Boolean  @default(false)
@@ -75,7 +75,7 @@ model InvestorAdmin_Temp {
   fullName            String?
   phoneNumber         String?
   city                String?
-  submissionStatus    String?
+  source              String?
   createdAt           DateTime? @db.Timestamp(6)
   updatedAt           DateTime? @db.Timestamp(6)
   emailSentToAdmin    Boolean?  @default(false)

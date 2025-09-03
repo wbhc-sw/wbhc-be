@@ -24,7 +24,7 @@ export interface Investor {
   sharesQuantity: number | null;
   calculatedTotal: number | null;
   city: string;
-  submissionStatus: string;
+  source: string;
   createdAt: Date;
   updatedAt: Date;
   emailSentToAdmin: boolean;
@@ -35,14 +35,14 @@ export interface Investor {
 }
 
 export interface InvestorAdmin {
-  id: bigint; // Changed from number to bigint to match Prisma schema
+  id: number;
   fullName: string;
   phoneNumber: string | null;
   sharesQuantity: number | null;
   calculatedTotal: number | null;
-  investmentAmount: number | null; // Added missing field from Prisma schema
+  investmentAmount: number | null;
   city: string;
-  submissionStatus: string;
+  source: string;
   createdAt: Date;
   updatedAt: Date;
   emailSentToAdmin: boolean;
@@ -50,7 +50,7 @@ export interface InvestorAdmin {
   notes: string | null;
   callingTimes: number;
   leadStatus: string;
-  originalInvestorId: string | null; // Keep as string since it references Investor.id
+  originalInvestorId: string | null;
   companyID: number | null;
   company?: Company | null;
 }

@@ -29,7 +29,7 @@ export const investorAdminCreateSchema = z.object({
   sharesQuantity: z.number().int().positive('Shares quantity must be a positive integer').optional(),
   calculatedTotal: z.number().positive('Calculated total must be a positive number').optional(),
   city: z.string().min(1, 'City is required'),
-  submissionStatus: z.string().optional(),
+  source: z.string().optional(),
   notes: z.string().optional(),
   investmentAmount: z.number().positive('Investment amount must be a positive number').optional(),
 });
@@ -47,7 +47,7 @@ export const investorAdminUpdateSchema = z.object({
   sharesQuantity: z.number().int().positive('Shares quantity must be a positive integer').optional(),
   calculatedTotal: z.number().positive('Calculated total must be a positive number').optional(),
   city: z.string().min(1, 'City is required').optional(),
-  submissionStatus: z.string().optional(),
+  source: z.string().optional(),
   notes: z.string().optional(),
   investmentAmount: z.number().positive('Investment amount must be a positive number').optional(),
   leadStatus: z.string().optional(),

@@ -10,7 +10,7 @@ type EmailInvestor = {
   sharesQuantity: number | null;
   calculatedTotal: number | null;
   city: string;
-  submissionStatus: string;
+  source: string;
   createdAt: Date;
   updatedAt: Date;
   emailSentToAdmin: boolean;
