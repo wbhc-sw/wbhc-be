@@ -97,9 +97,11 @@ router.post('/', jwtAuth, (req: Request, res: Response, next: NextFunction) => {
 // PUT /api/admin/investor-admin/:id - Update existing admin lead
 router.put('/:id', jwtAuth, (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const numericId = parseInt(id, 10);
   
-  if (isNaN(numericId)) {
+  let bigintId: bigint;
+  try {
+    bigintId = BigInt(id);
+  } catch (error) {
     res.status(400).json({ success: false, error: 'Invalid ID format' });
     return;
   }
@@ -118,7 +120,7 @@ router.put('/:id', jwtAuth, (req: Request, res: Response, next: NextFunction) =>
     }
     return next(err);
   }
-  prisma.investorAdmin.update({ where: { id: numericId }, data: parsed })
+  prisma.investorAdmin.update({ where: { id: bigintId }, data: parsed })
     .then((lead: InvestorAdmin) => res.status(200).json({ success: true, data: lead }))
     .catch(next);
 });

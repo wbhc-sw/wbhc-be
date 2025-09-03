@@ -35,12 +35,12 @@ export interface Investor {
 }
 
 export interface InvestorAdmin {
-  id: number; // Changed from string to number
+  id: bigint; // Changed from number to bigint to match Prisma schema
   fullName: string;
   phoneNumber: string | null;
   sharesQuantity: number | null;
   calculatedTotal: number | null;
-  // investmentAmount: number | null;
+  investmentAmount: number | null; // Added missing field from Prisma schema
   city: string;
   submissionStatus: string;
   createdAt: Date;
