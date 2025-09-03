@@ -45,7 +45,7 @@ model Investor {
 }
 
 model InvestorAdmin {
-  id                  Int      @id @default(autoincrement())
+  id                  BigInt   @id @unique @default(autoincrement())
   fullName            String
   phoneNumber         String?
   city                String
@@ -68,4 +68,24 @@ model InvestorAdmin {
   @@index([createdAt])
   @@index([leadStatus])
   @@index([companyID])
+}
+
+model InvestorAdmin_Temp {
+  id                  BigInt    @id @unique @default(autoincrement())
+  fullName            String?
+  phoneNumber         String?
+  city                String?
+  submissionStatus    String?
+  createdAt           DateTime? @db.Timestamp(6)
+  updatedAt           DateTime? @db.Timestamp(6)
+  emailSentToAdmin    Boolean?  @default(false)
+  emailSentToInvestor Boolean?  @default(false)
+  notes               String?
+  callingTimes        Int?      @default(0)
+  leadStatus          String?
+  originalInvestorId  String?
+  investmentAmount    Float?
+  calculatedTotal     Float?
+  sharesQuantity      Int?
+  companyID           Int?
 }

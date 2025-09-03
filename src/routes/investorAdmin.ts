@@ -8,11 +8,69 @@ import xss from 'xss';
 
 const router = Router();
 
-// GET /api/admin/investor-admin - Retrieve all admin leads
-router.get('/', jwtAuth, (req: Request, res: Response, next: NextFunction) => {
-  prisma.investorAdmin.findMany({ orderBy: { createdAt: 'desc' } })
-    .then((leads: InvestorAdmin[]) => res.status(200).json({ success: true, data: leads }))
-    .catch(next);
+// GET /api/admin/investor-admin - Retrieve all admin leads with filtering
+router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { search, status, city, companyID } = req.query;
+    
+    // Build the where clause for filtering
+    const whereClause: any = {};
+    
+    // Search in fullName and phoneNumber fields
+    if (search && typeof search === 'string') {
+      const searchTerm = search.trim();
+      if (searchTerm) {
+        whereClause.OR = [
+          {
+            fullName: {
+              contains: searchTerm,
+              mode: 'insensitive'
+            }
+          },
+          {
+            phoneNumber: {
+              contains: searchTerm,
+              mode: 'insensitive'
+            }
+          }
+        ];
+      }
+    }
+    
+    // Filter by lead status (exact match)
+    if (status && typeof status === 'string' && status !== 'all') {
+      whereClause.leadStatus = status;
+    }
+    
+    // Filter by city (exact match)
+    if (city && typeof city === 'string' && city !== 'all') {
+      whereClause.city = city;
+    }
+    
+    // Filter by companyID (exact match)
+    if (companyID && typeof companyID === 'string' && companyID !== 'all') {
+      const companyIdNum = parseInt(companyID, 10);
+      if (!isNaN(companyIdNum)) {
+        whereClause.companyID = companyIdNum;
+      }
+    }
+    
+    const leads = await prisma.investorAdmin.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        company: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+    
+    res.status(200).json({ success: true, data: leads });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // POST /api/admin/investor-admin - Create new admin lead
