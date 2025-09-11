@@ -1,20 +1,36 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../services/database';
-import { jwtAuth } from '../middleware/jwtAuth';
+import { 
+  jwtAuth, 
+  requireRole,
+  ROLES_THAT_CAN_READ,
+  ROLES_THAT_CAN_CREATE,
+  ROLES_THAT_CAN_UPDATE,
+  AuthRequest 
+} from '../middleware/roleAuth';
+import { UserRole } from '../types/investor';
 import { investorAdminCreateSchema, investorAdminUpdateSchema } from '../middleware/validation';
 import { InvestorAdmin } from '../types/investor';
 import xss from 'xss';
-// import { InvestorAdmin as PrismaInvestorAdmin, Investor as PrismaInvestor } from '@prisma/client';
 
 const router = Router();
 
-// GET /api/admin/investor-admin - Retrieve all admin leads with filtering
-router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+// @ts-expect-error: Suppress Express 5 type error
+router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const user = req.user!;
     const { search, status, city, companyID } = req.query;
     
     // Build the where clause for filtering
     const whereClause: any = {};
+    
+    // Company-specific access control
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!user.companyId) {
+        return res.status(403).json({ success: false, error: 'No company assigned to your account' });
+      }
+      whereClause.companyID = user.companyId;
+    }
     
     // Search in fullName and phoneNumber fields
     if (search && typeof search === 'string') {
@@ -47,11 +63,14 @@ router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction)
       whereClause.city = city;
     }
     
-    // Filter by companyID (exact match)
+    // Filter by companyID (exact match) - only for super roles
     if (companyID && typeof companyID === 'string' && companyID !== 'all') {
       const companyIdNum = parseInt(companyID, 10);
       if (!isNaN(companyIdNum)) {
-        whereClause.companyID = companyIdNum;
+        // Super roles can filter by any company, company roles are already restricted above
+        if ([UserRole.SUPER_ADMIN, UserRole.SUPER_VIEWER, UserRole.SUPER_CREATOR].includes(user.role)) {
+          whereClause.companyID = companyIdNum;
+        }
       }
     }
     
@@ -73,66 +92,118 @@ router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction)
   }
 });
 
-// POST /api/admin/investor-admin - Create new admin lead
-router.post('/', jwtAuth, (req: Request, res: Response, next: NextFunction) => {
-  // Sanitize input
-  const sanitized = Object.fromEntries(
-    Object.entries(req.body).map(([k, v]) => [k, typeof v === 'string' ? xss(v) : v])
-  );
-  let parsed;
+// @ts-expect-error: Suppress Express 5 type error
+router.post('/', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    parsed = investorAdminCreateSchema.parse(sanitized);
+    const user = req.user!;
+    
+    // Sanitize input
+    const sanitized = Object.fromEntries(
+      Object.entries(req.body).map(([k, v]) => [k, typeof v === 'string' ? xss(v) : v])
+    );
+    
+    let parsed = investorAdminCreateSchema.parse(sanitized);
+    
+    // IMPORTANT: Company creators can only create leads for their company
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!user.companyId) {
+        res.status(403).json({ success: false, error: 'No company assigned to your account' });
+        return;
+      }
+      
+      // Check if user is trying to create for a different company
+      if (parsed.companyID && parsed.companyID !== user.companyId) {
+        res.status(403).json({ 
+          success: false, 
+          error: `Access denied. You can only create leads for company ID ${user.companyId}, but you tried to create for company ID ${parsed.companyID}` 
+        });
+        return;
+      }
+      
+      // Force the companyID to be user's company (override any provided value)
+      parsed.companyID = user.companyId;
+    }
+    
+    const lead = await prisma.investorAdmin.create({ data: parsed });
+    res.status(201).json({ success: true, data: lead });
+    
   } catch (err: any) {
     if (err.name === 'ZodError') {
       res.status(400).json({ success: false, error: 'Validation failed', details: err.errors });
       return;
     }
-    return next(err);
+    next(err);
   }
-  prisma.investorAdmin.create({ data: parsed })
-    .then((lead: InvestorAdmin) => res.status(201).json({ success: true, data: lead }))
-    .catch(next);
 });
 
-// PUT /api/admin/investor-admin/:id - Update existing admin lead
-router.put('/:id', jwtAuth, (req: Request, res: Response, next: NextFunction) => {
-  const { id } = req.params;
-  const numericId = parseInt(id, 10);
-  
-  if (isNaN(numericId)) {
-    res.status(400).json({ success: false, error: 'Invalid ID format' });
-    return;
-  }
-  
-  // Sanitize input
-  const sanitized = Object.fromEntries(
-    Object.entries(req.body).map(([k, v]) => [k, typeof v === 'string' ? xss(v) : v])
-  );
-  let parsed;
+// @ts-expect-error: Suppress Express 5 type error
+router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    parsed = investorAdminUpdateSchema.parse(sanitized);
+    const user = req.user!;
+    const { id } = req.params;
+    const numericId = parseInt(id, 10);
+    
+    if (isNaN(numericId)) {
+      res.status(400).json({ success: false, error: 'Invalid ID format' });
+      return;
+    }
+    
+    // Company admins can only update leads from their company
+    if (user.role === UserRole.COMPANY_ADMIN && user.companyId) {
+      // First check if the lead belongs to their company
+      const existingLead = await prisma.investorAdmin.findUnique({ where: { id: numericId } });
+      if (!existingLead) {
+        res.status(404).json({ success: false, error: 'Lead not found' });
+        return;
+      }
+      if (existingLead.companyID !== user.companyId) {
+        res.status(403).json({ success: false, error: 'Access denied to this lead' });
+        return;
+      }
+    }
+    
+    // Sanitize input
+    const sanitized = Object.fromEntries(
+      Object.entries(req.body).map(([k, v]) => [k, typeof v === 'string' ? xss(v) : v])
+    );
+    
+    const parsed = investorAdminUpdateSchema.parse(sanitized);
+    
+    const lead = await prisma.investorAdmin.update({ where: { id: numericId }, data: parsed });
+    res.status(200).json({ success: true, data: lead });
+    
   } catch (err: any) {
     if (err.name === 'ZodError') {
       res.status(400).json({ success: false, error: 'Validation failed', details: err.errors });
       return;
     }
-    return next(err);
+    if (err.code === 'P2025') {
+      res.status(404).json({ success: false, error: 'Lead not found' });
+      return;
+    }
+    next(err);
   }
-  prisma.investorAdmin.update({ where: { id: numericId }, data: parsed })
-    .then((lead: InvestorAdmin) => res.status(200).json({ success: true, data: lead }))
-    .catch(next);
 });
 
-// POST /api/admin/investor-admin/transfer/:investorId
-router.post('/transfer/:investorId', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
-  const { investorId } = req.params;
-  const notes = req.body.notes ? xss(req.body.notes) : undefined;
-
+// @ts-expect-error: Suppress Express 5 type error
+router.post('/transfer/:investorId', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const user = req.user!;
+    const { investorId } = req.params;
+    const notes = req.body.notes ? xss(req.body.notes) : undefined;
+
     const investor = await prisma.investor.findUnique({ where: { id: investorId } });
     if (!investor) {
       res.status(404).json({ success: false, error: 'Investor not found' });
       return;
+    }
+    
+    // Company users can only transfer investors from their company
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!user.companyId || investor.companyID !== user.companyId) {
+        res.status(403).json({ success: false, error: 'Access denied to this investor' });
+        return;
+      }
     }
 
     const existing = await prisma.investorAdmin.findFirst({ where: { originalInvestorId: investorId } });
@@ -159,7 +230,7 @@ router.post('/transfer/:investorId', jwtAuth, async (req: Request, res: Response
           notes,
           callingTimes: 0,
           leadStatus: 'new',
-          originalInvestorId: investor.id, // This stays as string since Investor.id is still string
+          originalInvestorId: investor.id,
         }
       }),
       prisma.investor.update({
@@ -174,16 +245,30 @@ router.post('/transfer/:investorId', jwtAuth, async (req: Request, res: Response
   }
 });
 
-// GET /api/admin/investor-admin/statistics - Get investment amount statistics
-router.get('/statistics', jwtAuth, async (req: Request, res: Response, next: NextFunction) => {
+// @ts-expect-error: Suppress Express 5 type error
+router.get('/statistics', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const user = req.user!;
+    
+    let whereClause = {};
+    
+    // Company-specific roles can only see their company's statistics
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!user.companyId) {
+        return res.status(403).json({ success: false, error: 'No company assigned to your account' });
+      }
+      whereClause = { companyID: user.companyId };
+    }
+    
     const stats = await prisma.investorAdmin.aggregate({
+      where: whereClause,
       _max: { investmentAmount: true },
       _min: { investmentAmount: true },
       _avg: { investmentAmount: true },
       _sum: { investmentAmount: true },
       _count: { investmentAmount: true },
     });
+    
     res.status(200).json({ success: true, data: stats });
   } catch (err) {
     next(err);

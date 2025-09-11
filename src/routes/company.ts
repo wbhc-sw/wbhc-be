@@ -1,25 +1,62 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../services/database';
-import { jwtAuth } from '../middleware/jwtAuth';
+import { 
+  jwtAuth, 
+  requireRole, 
+  requireCompanyAccess,
+  ROLES_THAT_CAN_READ,
+  ROLES_THAT_CAN_CREATE,
+  ROLES_THAT_CAN_UPDATE,
+  ROLES_THAT_CAN_DELETE,
+  AuthRequest 
+} from '../middleware/roleAuth';
+import { UserRole } from '../types/investor';
 import { companyCreateSchema, companyUpdateSchema } from '../middleware/validation';
 import xss from 'xss';
 
 const router = Router();
 
-// GET /api/admin/company - Retrieve all companies
-router.get('/', jwtAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// Only SUPER roles should be able to create companies
+const COMPANY_CREATE_ROLES = [UserRole.SUPER_ADMIN, UserRole.SUPER_CREATOR];
+
+// Specific roles that can read companies (including SUPER_CREATOR)
+const COMPANY_READ_ROLES = [
+  UserRole.SUPER_ADMIN,
+  UserRole.COMPANY_ADMIN,
+  UserRole.SUPER_VIEWER,
+  UserRole.COMPANY_VIEWER,
+  UserRole.SUPER_CREATOR
+];
+
+// @ts-expect-error: Suppress Express 5 type error
+router.get('/', jwtAuth, requireRole(COMPANY_READ_ROLES), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const user = req.user!;
+    
+    let whereClause = {};
+    
+    // Company-specific roles can only see their company
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!user.companyId) {
+        res.status(403).json({ success: false, error: 'No company assigned to your account' });
+        return;
+      }
+      whereClause = { companyID: user.companyId };
+    }
+    
     const companies = await prisma.company.findMany({
+      where: whereClause,
       orderBy: { createdAt: 'desc' }
     });
+    
     res.status(200).json({ success: true, data: companies });
   } catch (err) {
     next(err);
   }
 });
 
-// GET /api/admin/company/:companyID - Get company by ID
-router.get('/:companyID', jwtAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// @ts-expect-error: Suppress Express 5 type error
+router.get('/:companyID', jwtAuth, requireRole(COMPANY_READ_ROLES), requireCompanyAccess, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { companyID } = req.params;
     const companyId = parseInt(companyID, 10);
@@ -44,15 +81,27 @@ router.get('/:companyID', jwtAuth, async (req: Request, res: Response, next: Nex
   }
 });
 
-// POST /api/admin/company - Create new company (admin only)
-router.post('/', jwtAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// @ts-expect-error: Suppress Express 5 type error
+router.post('/', jwtAuth, requireRole(COMPANY_CREATE_ROLES), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const user = req.user!;
+    
     // Sanitize input
     const sanitized = Object.fromEntries(
       Object.entries(req.body).map(([k, v]) => [k, typeof v === 'string' ? xss(v) : v])
     );
     
     const parsed = companyCreateSchema.parse(sanitized);
+    
+    // IMPORTANT: Company creators should not be able to create new companies
+    // They should only be able to work within their assigned company
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      res.status(403).json({ 
+        success: false, 
+        error: 'Company-specific users cannot create new companies. Only SUPER_ADMIN and SUPER_CREATOR can create companies.' 
+      });
+      return;
+    }
     
     const company = await prisma.company.create({
       data: parsed
@@ -72,8 +121,8 @@ router.post('/', jwtAuth, async (req: Request, res: Response, next: NextFunction
   }
 });
 
-// PUT /api/admin/company/:companyID - Update company
-router.put('/:companyID', jwtAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// @ts-expect-error: Suppress Express 5 type error
+router.put('/:companyID', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), requireCompanyAccess, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { companyID } = req.params;
     const companyId = parseInt(companyID, 10);
@@ -113,8 +162,8 @@ router.put('/:companyID', jwtAuth, async (req: Request, res: Response, next: Nex
   }
 });
 
-// DELETE /api/admin/company/:companyID - Delete company
-router.delete('/:companyID', jwtAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+// @ts-expect-error: Suppress Express 5 type error
+router.delete('/:companyID', jwtAuth, requireRole(ROLES_THAT_CAN_DELETE), requireCompanyAccess, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { companyID } = req.params;
     const companyId = parseInt(companyID, 10);
