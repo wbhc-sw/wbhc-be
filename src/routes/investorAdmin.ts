@@ -124,6 +124,16 @@ router.post('/', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE), async (req: AuthRe
       parsed.companyID = user.companyId;
     }
     
+      // Check for unique phone number
+    const existingLead = await prisma.investorAdmin.findFirst({
+      where: { phoneNumber: parsed.phoneNumber }
+    });
+    if (existingLead) {
+      res.status(409).json({ success: false, error: 'Phone number already exists for another lead.' });
+      return;
+    }
+
+
     const lead = await prisma.investorAdmin.create({ data: parsed });
     res.status(201).json({ success: true, data: lead });
     
