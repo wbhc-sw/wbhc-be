@@ -98,42 +98,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       }
     }
     
-    // Fallback to legacy admin credentials (for backward compatibility)
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
-    const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
-    
-    if (ADMIN_USERNAME && ADMIN_PASSWORD_HASH && username === ADMIN_USERNAME) {
-      const validLegacyPassword = await bcrypt.compare(password, ADMIN_PASSWORD_HASH);
-      if (validLegacyPassword) {
-        const token = jwt.sign({
-          userId: 'legacy-admin',
-          username: ADMIN_USERNAME,
-          email: 'admin@legacy.com',
-          role: UserRole.SUPER_ADMIN,
-          companyId: undefined
-        }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-        
-        res.cookie('admin_jwt', token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 24 * 60 * 60 * 1000,
-        });
-        
-        return res.status(200).json({
-          success: true,
-          user: {
-            id: 'legacy-admin',
-            username: ADMIN_USERNAME,
-            email: 'admin@legacy.com',
-            role: UserRole.SUPER_ADMIN,
-            isLegacy: true
-          }
-        });
-      }
-    }
-    
+    // No user found with provided credentials
     return res.status(401).json({ success: false, error: 'Invalid credentials' });
     
   } catch (err: any) {

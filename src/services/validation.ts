@@ -5,12 +5,10 @@ const REQUIRED_ENV_VARS = [
   'COMPANY_ADMIN_EMAIL',
   'COMPANY_NAME',
   'FRONTEND_URL',
-  'JWT_SECRET',  // This was already required but let's make it explicit
+  'JWT_SECRET',
 ];
 
 const OPTIONAL_ENV_VARS = [
-  'ADMIN_USERNAME',     // Will be deprecated in favor of database users
-  'ADMIN_PASSWORD_HASH', // Will be deprecated in favor of database users
   'FRONTEND_2_URL',
   'FRONTEND_3_URL',
   'PORT',

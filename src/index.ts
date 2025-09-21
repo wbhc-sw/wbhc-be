@@ -6,12 +6,10 @@ import dotenv from 'dotenv';
 import { rateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
 import investorRouter from './routes/investor';
-import adminRouter from './routes/admin';
-import { jwtAuth } from './middleware/jwtAuth';
 import { validateEnv } from './services/validation';
 import investorAdminRouter from './routes/investorAdmin';
 import companyRouter from './routes/company';
-import userRouter from './routes/user';  // New import
+import userRouter from './routes/user';
 import cookieParser from 'cookie-parser';
 // import { FRONTEND_URL } from './utils/constants';
 
@@ -57,8 +55,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API routes
-app.use('/api/admin/users', userRouter);        // New user management routes
-app.use('/api/admin', adminRouter);             // Legacy admin routes (will be deprecated)
+app.use('/api/admin/users', userRouter);        // Modern user management routes
 app.use('/api/investor-form', investorRouter);
 app.use('/api/admin/investor-admin', investorAdminRouter);
 app.use('/api/admin/company', companyRouter);
