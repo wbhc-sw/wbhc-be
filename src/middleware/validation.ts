@@ -32,6 +32,8 @@ export const investorAdminCreateSchema = z.object({
   source: z.string().optional(),
   notes: z.string().optional(),
   investmentAmount: z.number().positive('Investment amount must be a positive number').optional(),
+  callingTimes: z.number().int().min(0, 'Calling times must be non-negative').optional(),
+  leadStatus: z.string().optional(),
 });
 
 export const investorAdminUpdateSchema = z.object({
