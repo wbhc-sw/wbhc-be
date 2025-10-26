@@ -27,10 +27,11 @@ const {
   FRONTEND_URL,
   FRONTEND_2_URL,
   FRONTEND_3_URL,
+  FRONTEND_4_URL,
   // NODE_ENV
 } = process.env;
 
-console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url): url is string => typeof url === 'string'));
+console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL, FRONTEND_4_URL].filter((url): url is string => typeof url === 'string'));
 
 // console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
 // console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
@@ -41,7 +42,7 @@ console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url): url is 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: [FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url): url is string => typeof url === 'string'),
+  origin: [FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL, FRONTEND_4_URL].filter((url): url is string => typeof url === 'string'),
   credentials: true,
 }));
 app.use(helmet());
