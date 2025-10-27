@@ -52,6 +52,7 @@ export interface InvestorAdmin {
   leadStatus: string;
   originalInvestorId: string | null;
   companyID: number | null;
+  msgDate: Date | null;
   company?: Company | null;
 }
 

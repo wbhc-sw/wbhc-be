@@ -104,6 +104,17 @@ router.post('/', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE), async (req: AuthRe
     
     let parsed = investorAdminCreateSchema.parse(sanitized);
     
+    // Validate msgDate is required for creators
+    if ([UserRole.SUPER_CREATOR, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!parsed.msgDate) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'msgDate is required for creator roles' 
+        });
+        return;
+      }
+    }
+    
     // IMPORTANT: Company creators can only create leads for their company
     if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_CREATOR].includes(user.role)) {
       if (!user.companyId) {
@@ -201,6 +212,18 @@ router.post('/transfer/:investorId', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE)
     const user = req.user!;
     const { investorId } = req.params;
     const notes = req.body.notes ? xss(req.body.notes) : undefined;
+    const msgDate = req.body.msgDate ? new Date(req.body.msgDate) : undefined;
+
+    // Validate msgDate is required for creators
+    if ([UserRole.SUPER_CREATOR, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!msgDate) {
+        res.status(400).json({ 
+          success: false, 
+          error: 'msgDate is required for creator roles' 
+        });
+        return;
+      }
+    }
 
     const investor = await prisma.investor.findUnique({ where: { id: investorId } });
     if (!investor) {
@@ -241,6 +264,7 @@ router.post('/transfer/:investorId', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE)
           callingTimes: 0,
           leadStatus: 'new',
           originalInvestorId: investor.id,
+          msgDate,
         }
       }),
       prisma.investor.update({

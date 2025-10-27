@@ -86,6 +86,7 @@ model InvestorAdmin {
   calculatedTotal     Float?
   sharesQuantity      Int?
   companyID           Int?
+  msgDate             DateTime?
   company             Company? @relation(fields: [companyID], references: [companyID])
 
   @@index([sharesQuantity])
