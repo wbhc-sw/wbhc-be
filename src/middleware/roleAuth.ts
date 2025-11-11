@@ -80,17 +80,21 @@ export function requireCompanyAccess(req: AuthRequest, res: Response, next: Next
   }
   
   const user = req.user;
+  
+  // Super roles (especially SUPER_ADMIN) don't need company_ID at all
+  // Even if they have a companyId in their JWT (e.g., from a previous role),
+  // they can access any company or make requests without company_ID
+  if ([UserRole.SUPER_ADMIN, UserRole.SUPER_VIEWER, UserRole.SUPER_CREATOR].includes(user.role)) {
+    return next();
+  }
+  
+  // For company roles, we need to validate company_ID
   const requestedCompanyId = parseInt(
     req.params.companyId || 
     req.params.companyID || 
     req.body.companyID || 
     req.query.companyID as string
   );
-  
-  // Super roles can access any company
-  if ([UserRole.SUPER_ADMIN, UserRole.SUPER_VIEWER, UserRole.SUPER_CREATOR].includes(user.role)) {
-    return next();
-  }
   
   // Company roles can only access their company
   if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR].includes(user.role)) {

@@ -19,7 +19,12 @@ const router = Router();
 router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
-    const { search, status, city, companyID } = req.query;
+    const { search, status, city, companyID, source, page, limit } = req.query;
+    
+    // Pagination parameters
+    const pageNum = page ? Math.max(1, parseInt(page as string, 10)) : 1;
+    const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit as string, 10))) : 20; // Default 20, max 100
+    const skip = (pageNum - 1) * limitNum;
     
     // Build the where clause for filtering
     const whereClause: any = {};
@@ -63,6 +68,11 @@ router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthReque
       whereClause.city = city;
     }
     
+    // Filter by source (exact match)
+    if (source && typeof source === 'string' && source !== 'all') {
+      whereClause.source = source;
+    }
+    
     // Filter by companyID (exact match) - only for super roles
     if (companyID && typeof companyID === 'string' && companyID !== 'all') {
       const companyIdNum = parseInt(companyID, 10);
@@ -74,9 +84,15 @@ router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthReque
       }
     }
     
+    // Get total count for pagination metadata
+    const total = await prisma.investorAdmin.count({ where: whereClause });
+    
+    // Get paginated leads
     const leads = await prisma.investorAdmin.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limitNum,
       include: {
         company: {
           select: {
@@ -86,7 +102,21 @@ router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthReque
       }
     });
     
-    res.status(200).json({ success: true, data: leads });
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limitNum);
+    
+    res.status(200).json({ 
+      success: true, 
+      data: leads,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages,
+        hasNextPage: pageNum < totalPages,
+        hasPreviousPage: pageNum > 1
+      }
+    });
   } catch (error) {
     next(error);
   }

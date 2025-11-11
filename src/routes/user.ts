@@ -24,7 +24,7 @@ const createUserSchema = z.object({
     UserRole.SUPER_CREATOR,
     UserRole.COMPANY_CREATOR
   ]),
-  companyId: z.number().int().positive().optional()
+  companyId: z.union([z.number().int().positive(), z.null()]).optional() // Allows null, undefined, or positive integer
 });
 
 const updateUserSchema = z.object({
@@ -39,7 +39,7 @@ const updateUserSchema = z.object({
     UserRole.SUPER_CREATOR,
     UserRole.COMPANY_CREATOR
   ]).optional(),
-  companyId: z.number().int().positive().optional(),
+  companyId: z.union([z.number().int().positive(), z.null()]).optional(), // Allows null, undefined, or positive integer
   isActive: z.boolean().optional()
 });
 
@@ -199,6 +199,15 @@ router.post('/', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: AuthR
     
     const parsed = createUserSchema.parse(sanitized);
     
+    // Validate: Company roles must have a companyId, super roles can have null
+    const companyRoles = [UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR];
+    if (companyRoles.includes(parsed.role) && !parsed.companyId) {
+      return res.status(400).json({
+        success: false,
+        error: `Company roles (${parsed.role}) must have a companyId assigned`
+      });
+    }
+    
     // Check if username or email already exists
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -277,6 +286,29 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
     
     const parsed = updateUserSchema.parse(sanitized);
     
+    // Get existing user to check current role if role is not being updated
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+      select: { role: true, companyId: true }
+    });
+    
+    if (!existingUser) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    
+    // Determine the role that will be used (updated role or existing role)
+    const targetRole = parsed.role || (existingUser.role as UserRole);
+    const targetCompanyId = parsed.companyId !== undefined ? parsed.companyId : existingUser.companyId;
+    
+    // Validate: Company roles must have a companyId, super roles can have null
+    const companyRoles = [UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR];
+    if (companyRoles.includes(targetRole) && !targetCompanyId) {
+      return res.status(400).json({
+        success: false,
+        error: `Company roles (${targetRole}) must have a companyId assigned`
+      });
+    }
+    
     // Prepare update data
     const updateData: any = {};
     
@@ -286,7 +318,8 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
     if (parsed.companyId !== undefined) updateData.companyId = parsed.companyId;
     if (parsed.isActive !== undefined) updateData.isActive = parsed.isActive;
     
-    // Hash password if provided
+    // Super admins can update passwords for any user
+    // Password is hashed before storing in the database
     if (parsed.password) {
       updateData.passwordHash = await bcrypt.hash(parsed.password, 12);
     }
