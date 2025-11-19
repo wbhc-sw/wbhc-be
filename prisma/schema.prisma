@@ -20,13 +20,34 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
+  // User tracking fields
+  createdBy   String?  // User ID who created this user
+  updatedBy   String?  // User ID who last updated this user
+  
   // Relationships
-  company     Company? @relation(fields: [companyId], references: [companyID])
+  company     Company? @relation("UserCompany", fields: [companyId], references: [companyID])
+  activityLogs ActivityLog[]
+  
+  // InvestorAdmin tracking relationships
+  investorAdminsCreated   InvestorAdmin[] @relation("InvestorAdminCreatedBy")
+  investorAdminsUpdated   InvestorAdmin[] @relation("InvestorAdminUpdatedBy")
+  
+  // User tracking relationships
+  createdByUser           User?    @relation("UserCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser           User?    @relation("UserUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+  usersCreated            User[]   @relation("UserCreatedBy")
+  usersUpdated            User[]   @relation("UserUpdatedBy")
+  
+  // Company tracking relationships
+  companiesCreated        Company[] @relation("CompanyCreatedBy")
+  companiesUpdated        Company[] @relation("CompanyUpdatedBy")
   
   @@index([role])
   @@index([companyId])
   @@index([username])
   @@index([email])
+  @@index([createdBy])
+  @@index([updatedBy])
 }
 
 model Company {
@@ -38,13 +59,24 @@ model Company {
   updatedAt      DateTime        @updatedAt
   companyID      Int             @id @default(autoincrement())
   
+  // Company tracking fields
+  createdBy      String?  // User ID who created this company
+  updatedBy      String?  // User ID who last updated this company
+  
   // Relationships
   investors      Investor[]
   investorAdmins InvestorAdmin[]
-  users          User[]          // Users associated with this company
+  users          User[]          @relation("UserCompany") // Users associated with this company
+  activityLogs   ActivityLog[]
+  
+  // Company tracking relationships
+  createdByUser  User?    @relation("CompanyCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser  User?    @relation("CompanyUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
 
   @@index([name])
   @@index([createdAt])
+  @@index([createdBy])
+  @@index([updatedBy])
 }
 
 model Investor {
@@ -88,11 +120,21 @@ model InvestorAdmin {
   companyID           Int?
   msgDate             DateTime?
   company             Company? @relation(fields: [companyID], references: [companyID])
+  
+  // User tracking fields
+  createdBy           String?  // User ID who created this record
+  updatedBy           String?  // User ID who last updated this record
+  
+  // Relationships
+  createdByUser       User?    @relation("InvestorAdminCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  updatedByUser       User?    @relation("InvestorAdminUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
 
   @@index([sharesQuantity])
   @@index([createdAt])
   @@index([leadStatus])
   @@index([companyID])
+  @@index([createdBy])
+  @@index([updatedBy])
 }
 
 model InvestorAdmin_Temp {
@@ -113,4 +155,49 @@ model InvestorAdmin_Temp {
   calculatedTotal     Float?
   sharesQuantity      Int?
   companyID           Int?
+}
+
+// Activity Log model for tracking user actions and audit trail
+model ActivityLog {
+  id            String   @id @default(uuid())
+  userId        String?  // User who performed the action (nullable to allow SetNull onDelete)
+  username      String   // Denormalized for quick queries
+  userRole      String   // User's role at time of action
+  companyId     Int?     // Company context (if applicable)
+  
+  // Action details
+  action        String   // CREATE, READ, UPDATE, DELETE, TRANSFER, LOGIN, LOGOUT
+  resourceType  String   // Investor, InvestorAdmin, Company, User
+  resourceId   String?  // ID of the affected resource
+  
+  // Request details
+  httpMethod    String   // GET, POST, PUT, DELETE
+  endpoint      String   // /api/admin/investor-admin
+  statusCode    Int      // 200, 201, 400, 404, etc.
+  
+  // Performance & metadata
+  duration      Int?     // Request duration in milliseconds (optional - for performance monitoring)
+  ipAddress     String?  // Client IP address
+  userAgent     String?  // Browser/client information
+  
+  // Context data (JSON fields for flexibility)
+  requestBody   Json?    // Sanitized request payload (for CREATE/UPDATE operations)
+  errorMessage  String?  // Error details if failed
+  metadata      Json?    // Additional context (filters, pagination, query params - highly recommended)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  
+  // Relationships
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  company       Company? @relation(fields: [companyId], references: [companyID], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([companyId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([resourceType, resourceId])
 }

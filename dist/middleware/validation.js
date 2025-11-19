@@ -24,9 +24,12 @@ exports.investorAdminCreateSchema = zod_1.z.object({
     sharesQuantity: zod_1.z.number().int().positive('Shares quantity must be a positive integer').optional(),
     calculatedTotal: zod_1.z.number().positive('Calculated total must be a positive number').optional(),
     city: zod_1.z.string().min(1, 'City is required'),
-    submissionStatus: zod_1.z.string().optional(),
+    source: zod_1.z.string().optional(),
     notes: zod_1.z.string().optional(),
     investmentAmount: zod_1.z.number().positive('Investment amount must be a positive number').optional(),
+    callingTimes: zod_1.z.number().int().min(0, 'Calling times must be non-negative').optional(),
+    leadStatus: zod_1.z.string().optional(),
+    msgDate: zod_1.z.coerce.date().optional(),
 });
 exports.investorAdminUpdateSchema = zod_1.z.object({
     fullName: zod_1.z.string().min(1, 'Full name is required').optional(),
@@ -38,9 +41,12 @@ exports.investorAdminUpdateSchema = zod_1.z.object({
     sharesQuantity: zod_1.z.number().int().positive('Shares quantity must be a positive integer').optional(),
     calculatedTotal: zod_1.z.number().positive('Calculated total must be a positive number').optional(),
     city: zod_1.z.string().min(1, 'City is required').optional(),
-    submissionStatus: zod_1.z.string().optional(),
+    source: zod_1.z.string().optional(),
     notes: zod_1.z.string().optional(),
     investmentAmount: zod_1.z.number().positive('Investment amount must be a positive number').optional(),
+    leadStatus: zod_1.z.string().optional(),
+    callingTimes: zod_1.z.number().int().min(0, 'Calling times must be non-negative').optional(),
+    msgDate: zod_1.z.coerce.date().optional(),
 });
 exports.companyCreateSchema = zod_1.z.object({
     name: zod_1.z.string().min(1, 'Company name is required'),

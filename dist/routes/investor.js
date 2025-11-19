@@ -8,10 +8,9 @@ const validation_1 = require("../middleware/validation");
 const database_1 = require("../services/database");
 const email_1 = require("../services/email");
 const xss_1 = __importDefault(require("xss"));
-// import { INVESTMENT_PACKAGES } from '../utils/constants';
-const jwtAuth_1 = require("../middleware/jwtAuth");
+const roleAuth_1 = require("../middleware/roleAuth");
+const investor_1 = require("../types/investor");
 const router = (0, express_1.Router)();
-// console.log('Allowed investment packages:', INVESTMENT_PACKAGES);
 // @ts-expect-error: Suppress Express 5 type error
 router.post('/', async (req, res, next) => {
     try {
@@ -54,11 +53,29 @@ router.post('/', async (req, res, next) => {
         next(err);
     }
 });
-// GET / - Return all investor submissions (private, admin only)
-router.get('/', jwtAuth_1.jwtAuth, async (req, res, next) => {
+// @ts-expect-error: Suppress Express 5 type error
+router.get('/', roleAuth_1.jwtAuth, (0, roleAuth_1.requireRole)(roleAuth_1.ROLES_THAT_CAN_READ), async (req, res, next) => {
     try {
+        const user = req.user;
+        let whereClause = {};
+        // Company-specific roles can only see their company's investors
+        if ([investor_1.UserRole.COMPANY_ADMIN, investor_1.UserRole.COMPANY_VIEWER, investor_1.UserRole.COMPANY_CREATOR].includes(user.role)) {
+            if (!user.companyId) {
+                return res.status(403).json({ success: false, error: 'No company assigned to your account' });
+            }
+            whereClause = { companyID: user.companyId };
+        }
         const investors = await database_1.prisma.investor.findMany({
+            where: whereClause,
             orderBy: { createdAt: 'desc' },
+            include: {
+                company: {
+                    select: {
+                        companyID: true,
+                        name: true
+                    }
+                }
+            }
         });
         res.status(200).json({ success: true, data: investors });
     }

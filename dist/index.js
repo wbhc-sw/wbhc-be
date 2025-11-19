@@ -10,11 +10,12 @@ const morgan_1 = __importDefault(require("morgan"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const rateLimiter_1 = require("./middleware/rateLimiter");
 const errorHandler_1 = require("./middleware/errorHandler");
+const activityTracker_1 = require("./middleware/activityTracker");
 const investor_1 = __importDefault(require("./routes/investor"));
-const admin_1 = __importDefault(require("./routes/admin"));
 const validation_1 = require("./services/validation");
 const investorAdmin_1 = __importDefault(require("./routes/investorAdmin"));
 const company_1 = __importDefault(require("./routes/company"));
+const user_1 = __importDefault(require("./routes/user"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 // import { FRONTEND_URL } from './utils/constants';
 // Load environment variables
@@ -24,10 +25,10 @@ dotenv_1.default.config();
 (0, validation_1.validateEnv)();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
-const { FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL    
-// NODE_ENV 
+const { FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL, FRONTEND_4_URL,
+// NODE_ENV
  } = process.env;
-console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url) => typeof url === 'string'));
+console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL, FRONTEND_4_URL].filter((url) => typeof url === 'string'));
 // console.log('EMAIL_SERVICE_USER:', EMAIL_SERVICE_USER);
 // console.log('EMAIL_SERVICE_PASS:', EMAIL_SERVICE_PASS);
 // console.log('COMPANY_ADMIN_EMAIL:',   COMPANY_ADMIN_EMAIL);
@@ -36,19 +37,22 @@ console.log([FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url) => typeo
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)({
-    origin: [FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL].filter((url) => typeof url === 'string'),
+    origin: [FRONTEND_URL, FRONTEND_2_URL, FRONTEND_3_URL, FRONTEND_4_URL].filter((url) => typeof url === 'string'),
     credentials: true,
 }));
 app.use((0, helmet_1.default)());
 app.use((0, morgan_1.default)('dev'));
-app.use(rateLimiter_1.rateLimiter);
+app.use(rateLimiter_1.rateLimiter); // This now excludes GET requests
 app.use((0, cookie_parser_1.default)());
+// Activity tracking middleware - must be after cookieParser and before routes
+// This tracks user actions for audit and analytics
+app.use(activityTracker_1.activityTracker);
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'API is healthy' });
 });
 // API routes
-app.use('/api/admin', admin_1.default);
+app.use('/api/admin/users', user_1.default); // Modern user management routes
 app.use('/api/investor-form', investor_1.default);
 app.use('/api/admin/investor-admin', investorAdmin_1.default);
 app.use('/api/admin/company', company_1.default);

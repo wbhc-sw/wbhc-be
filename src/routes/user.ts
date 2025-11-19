@@ -143,6 +143,18 @@ router.get('/', jwtAuth, requireRole([UserRole.SUPER_ADMIN, UserRole.SUPER_VIEWE
             companyID: true,
             name: true
           }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -174,6 +186,18 @@ router.get('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
           select: {
             companyID: true,
             name: true
+          }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
           }
         }
       }
@@ -229,13 +253,16 @@ router.post('/', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: AuthR
     const passwordHash = await bcrypt.hash(parsed.password, 12);
     
     // Create user
+    const currentUser = req.user!;
     const user = await prisma.user.create({
       data: {
         username: parsed.username,
         email: parsed.email,
         passwordHash,
         role: parsed.role,
-        companyId: parsed.companyId
+        companyId: parsed.companyId,
+        createdBy: currentUser.userId  // Track who created this user
+        // updatedBy: Leave as null - not updated yet
       },
       select: {
         id: true,
@@ -249,6 +276,18 @@ router.post('/', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: AuthR
           select: {
             companyID: true,
             name: true
+          }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
           }
         }
       }
@@ -324,6 +363,9 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
       updateData.passwordHash = await bcrypt.hash(parsed.password, 12);
     }
     
+    // Track who updated this user
+    updateData.updatedBy = req.user!.userId;
+    
     const user = await prisma.user.update({
       where: { id },
       data: updateData,
@@ -339,6 +381,18 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
           select: {
             companyID: true,
             name: true
+          }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
           }
         }
       }

@@ -8,10 +8,27 @@ const REQUIRED_ENV_VARS = [
     'COMPANY_ADMIN_EMAIL',
     'COMPANY_NAME',
     'FRONTEND_URL',
+    'FRONTEND_2_URL',
+    'FRONTEND_3_URL',
+    'FRONTEND_4_URL',
+    'JWT_SECRET',
+];
+const OPTIONAL_ENV_VARS = [
+    'FRONTEND_URL',
+    'FRONTEND_2_URL',
+    'FRONTEND_3_URL',
+    'FRONTEND_4_URL',
+    'PORT',
+    'NODE_ENV',
 ];
 function validateEnv() {
     const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
     if (missing.length > 0) {
         throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
+    // Log optional variables that are missing (for debugging)
+    const missingOptional = OPTIONAL_ENV_VARS.filter((key) => !process.env[key]);
+    if (missingOptional.length > 0) {
+        console.warn(`Optional environment variables not set: ${missingOptional.join(', ')}`);
     }
 }

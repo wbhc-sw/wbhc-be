@@ -46,6 +46,27 @@ router.get('/', jwtAuth, requireRole(COMPANY_READ_ROLES), async (req: AuthReques
     
     const companies = await prisma.company.findMany({
       where: whereClause,
+      select: {
+        companyID: true,
+        name: true,
+        description: true,
+        phoneNumber: true,
+        url: true,
+        createdAt: true,
+        updatedAt: true,
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' }
     });
     
@@ -67,7 +88,28 @@ router.get('/:companyID', jwtAuth, requireRole(COMPANY_READ_ROLES), requireCompa
     }
     
     const company = await prisma.company.findUnique({
-      where: { companyID: companyId }
+      where: { companyID: companyId },
+      select: {
+        companyID: true,
+        name: true,
+        description: true,
+        phoneNumber: true,
+        url: true,
+        createdAt: true,
+        updatedAt: true,
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
     });
     
     if (!company) {
@@ -104,7 +146,32 @@ router.post('/', jwtAuth, requireRole(COMPANY_CREATE_ROLES), async (req: AuthReq
     }
     
     const company = await prisma.company.create({
-      data: parsed
+      data: {
+        ...parsed,
+        createdBy: user.userId  // Track who created this company
+        // updatedBy: Leave as null - not updated yet
+      },
+      select: {
+        companyID: true,
+        name: true,
+        description: true,
+        phoneNumber: true,
+        url: true,
+        createdAt: true,
+        updatedAt: true,
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
     });
     
     res.status(201).json({ success: true, data: company });
@@ -141,7 +208,31 @@ router.put('/:companyID', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), requireCo
     
     const company = await prisma.company.update({
       where: { companyID: companyId },
-      data: parsed
+      data: {
+        ...parsed,
+        updatedBy: req.user!.userId  // Track who updated this company
+      },
+      select: {
+        companyID: true,
+        name: true,
+        description: true,
+        phoneNumber: true,
+        url: true,
+        createdAt: true,
+        updatedAt: true,
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
     });
     
     res.status(200).json({ success: true, data: company });

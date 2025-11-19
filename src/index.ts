@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { rateLimiter } from './middleware/rateLimiter';
 import { errorHandler } from './middleware/errorHandler';
+import { activityTracker } from './middleware/activityTracker';
 import investorRouter from './routes/investor';
 import { validateEnv } from './services/validation';
 import investorAdminRouter from './routes/investorAdmin';
@@ -49,6 +50,10 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(rateLimiter); // This now excludes GET requests
 app.use(cookieParser());
+
+// Activity tracking middleware - must be after cookieParser and before routes
+// This tracks user actions for audit and analytics
+app.use(activityTracker);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

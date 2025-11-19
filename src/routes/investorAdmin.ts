@@ -93,10 +93,40 @@ router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthReque
       orderBy: { createdAt: 'desc' },
       skip,
       take: limitNum,
-      include: {
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        city: true,
+        source: true,
+        createdAt: true,
+        updatedAt: true,
+        emailSentToAdmin: true,
+        emailSentToInvestor: true,
+        notes: true,
+        callingTimes: true,
+        leadStatus: true,
+        originalInvestorId: true,
+        investmentAmount: true,
+        calculatedTotal: true,
+        sharesQuantity: true,
+        companyID: true,
+        msgDate: true,
         company: {
           select: {
             name: true
+          }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
           }
         }
       }
@@ -175,7 +205,50 @@ router.post('/', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE), async (req: AuthRe
     }
 
 
-    const lead = await prisma.investorAdmin.create({ data: parsed });
+    const lead = await prisma.investorAdmin.create({ 
+      data: {
+        ...parsed,
+        createdBy: user.userId,  // Track who created this
+        // updatedBy: Leave as null - not updated yet
+      },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        city: true,
+        source: true,
+        createdAt: true,
+        updatedAt: true,
+        emailSentToAdmin: true,
+        emailSentToInvestor: true,
+        notes: true,
+        callingTimes: true,
+        leadStatus: true,
+        originalInvestorId: true,
+        investmentAmount: true,
+        calculatedTotal: true,
+        sharesQuantity: true,
+        companyID: true,
+        msgDate: true,
+        company: {
+          select: {
+            name: true
+          }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
+    });
     res.status(201).json({ success: true, data: lead });
     
   } catch (err: any) {
@@ -220,7 +293,50 @@ router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: Auth
     
     const parsed = investorAdminUpdateSchema.parse(sanitized);
     
-    const lead = await prisma.investorAdmin.update({ where: { id: numericId }, data: parsed });
+    const lead = await prisma.investorAdmin.update({ 
+      where: { id: numericId }, 
+      data: {
+        ...parsed,
+        updatedBy: user.userId,  // Track who updated this
+      },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        city: true,
+        source: true,
+        createdAt: true,
+        updatedAt: true,
+        emailSentToAdmin: true,
+        emailSentToInvestor: true,
+        notes: true,
+        callingTimes: true,
+        leadStatus: true,
+        originalInvestorId: true,
+        investmentAmount: true,
+        calculatedTotal: true,
+        sharesQuantity: true,
+        companyID: true,
+        msgDate: true,
+        company: {
+          select: {
+            name: true
+          }
+        },
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        updatedByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
+    });
     res.status(200).json({ success: true, data: lead });
     
   } catch (err: any) {
@@ -295,6 +411,45 @@ router.post('/transfer/:investorId', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE)
           leadStatus: 'new',
           originalInvestorId: investor.id,
           msgDate,
+          createdBy: user.userId,  // Track who transferred/created this
+          // updatedBy: Leave as null - not updated yet
+        },
+        select: {
+          id: true,
+          fullName: true,
+          phoneNumber: true,
+          city: true,
+          source: true,
+          createdAt: true,
+          updatedAt: true,
+          emailSentToAdmin: true,
+          emailSentToInvestor: true,
+          notes: true,
+          callingTimes: true,
+          leadStatus: true,
+          originalInvestorId: true,
+          investmentAmount: true,
+          calculatedTotal: true,
+          sharesQuantity: true,
+          companyID: true,
+          msgDate: true,
+          company: {
+            select: {
+              name: true
+            }
+          },
+          createdByUser: {
+            select: {
+              id: true,
+              username: true
+            }
+          },
+          updatedByUser: {
+            select: {
+              id: true,
+              username: true
+            }
+          }
         }
       }),
       prisma.investor.update({
