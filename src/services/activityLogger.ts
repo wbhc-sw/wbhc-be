@@ -29,6 +29,7 @@ export interface ActivityLogData {
   duration?: number;
   ipAddress?: string;
   userAgent?: string;
+  location?: string | null;
   requestBody?: any;
   errorMessage?: string | null;
   metadata?: any;
@@ -185,6 +186,7 @@ export async function logActivity(data: ActivityLogData): Promise<void> {
         duration: data.duration,
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
+        location: data.location,
         requestBody: sanitizedBody,
         errorMessage: data.errorMessage,
         metadata: data.metadata,

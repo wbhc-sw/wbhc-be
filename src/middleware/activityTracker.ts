@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './roleAuth';
 import { logActivity, extractMetadata, formatError } from '../services/activityLogger';
+import { getLocationFromIP } from '../services/locationService';
 
 // Endpoints to skip tracking
 const SKIP_ENDPOINTS = [
@@ -236,23 +237,28 @@ export function activityTracker(req: AuthRequest, res: Response, next: NextFunct
       console.log(`[ActivityTracker] Logging: ${action} ${resourceType} - Status: ${res.statusCode}`);
     }
     
-    logActivity({
-      userId,
-      username,
-      userRole,
-      companyId: companyId || null,
-      action,
-      resourceType,
-      resourceId: resourceId || null,
-      httpMethod: req.method,
-      endpoint: fullPath,
-      statusCode: res.statusCode,
-      duration,
-      ipAddress: getClientIp(req),
-      userAgent: req.headers['user-agent'],
-      requestBody,
-      errorMessage,
-      metadata,
+    // Get location from IP (async, non-blocking)
+    const clientIp = getClientIp(req);
+    getLocationFromIP(clientIp).then((location) => {
+      return logActivity({
+        userId,
+        username,
+        userRole,
+        companyId: companyId || null,
+        action,
+        resourceType,
+        resourceId: resourceId || null,
+        httpMethod: req.method,
+        endpoint: fullPath,
+        statusCode: res.statusCode,
+        duration,
+        ipAddress: clientIp,
+        userAgent: req.headers['user-agent'],
+        location,
+        requestBody,
+        errorMessage,
+        metadata,
+      });
     }).catch((err) => {
       // Don't break request if logging fails
       if (process.env.NODE_ENV !== 'production') {

@@ -276,3 +276,23 @@ const userId = req.user?.userId; // ✅ Already available from JWT!
 
 **Ready to proceed with this approach?** It's the best option! 🚀
 
+-- See where users are logging in from
+SELECT location, COUNT(*) as login_count
+FROM ActivityLog
+WHERE action = 'LOGIN' AND location IS NOT NULL
+GROUP BY location
+ORDER BY login_count DESC;
+
+-- Track user activity by location
+SELECT username, location, action, createdAt
+FROM ActivityLog
+WHERE location IS NOT NULL
+ORDER BY createdAt DESC
+LIMIT 20;
+
+-- Monitor suspicious activity from specific locations
+SELECT *
+FROM ActivityLog
+WHERE location LIKE '%China%'
+  OR location LIKE '%Russia%'
+ORDER BY createdAt DESC;
