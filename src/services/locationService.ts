@@ -1,4 +1,4 @@
-import https from 'https';
+import http from 'http';
 
 interface LocationData {
   city?: string;
@@ -54,7 +54,7 @@ function fetchLocation(ip: string): Promise<string | null> {
   return new Promise((resolve, reject) => {
     const url = `http://ip-api.com/json/${ip}?fields=status,country,countryCode,region,city`;
     
-    https.get(url, (res) => {
+    http.get(url, (res) => {
       let data = '';
       
       res.on('data', (chunk) => {
