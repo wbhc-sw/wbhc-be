@@ -19,7 +19,19 @@ const router = Router();
 router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;
-    const { search, status, city, companyID, source, page, limit } = req.query;
+    const { 
+      search, 
+      status, 
+      city, 
+      companyID, 
+      source, 
+      createdAtFrom, 
+      createdAtTo, 
+      updatedAtFrom, 
+      updatedAtTo, 
+      page, 
+      limit 
+    } = req.query;
     
     // Pagination parameters
     const pageNum = page ? Math.max(1, parseInt(page as string, 10)) : 1;
@@ -80,6 +92,44 @@ router.get('/', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthReque
         // Super roles can filter by any company, company roles are already restricted above
         if ([UserRole.SUPER_ADMIN, UserRole.SUPER_VIEWER, UserRole.SUPER_CREATOR].includes(user.role)) {
           whereClause.companyID = companyIdNum;
+        }
+      }
+    }
+    
+    // Filter by createdAt date range
+    if (createdAtFrom || createdAtTo) {
+      whereClause.createdAt = {};
+      if (createdAtFrom && typeof createdAtFrom === 'string') {
+        const fromDate = new Date(createdAtFrom);
+        if (!isNaN(fromDate.getTime())) {
+          whereClause.createdAt.gte = fromDate;
+        }
+      }
+      if (createdAtTo && typeof createdAtTo === 'string') {
+        const toDate = new Date(createdAtTo);
+        if (!isNaN(toDate.getTime())) {
+          // Set to end of day
+          toDate.setHours(23, 59, 59, 999);
+          whereClause.createdAt.lte = toDate;
+        }
+      }
+    }
+    
+    // Filter by updatedAt date range
+    if (updatedAtFrom || updatedAtTo) {
+      whereClause.updatedAt = {};
+      if (updatedAtFrom && typeof updatedAtFrom === 'string') {
+        const fromDate = new Date(updatedAtFrom);
+        if (!isNaN(fromDate.getTime())) {
+          whereClause.updatedAt.gte = fromDate;
+        }
+      }
+      if (updatedAtTo && typeof updatedAtTo === 'string') {
+        const toDate = new Date(updatedAtTo);
+        if (!isNaN(toDate.getTime())) {
+          // Set to end of day
+          toDate.setHours(23, 59, 59, 999);
+          whereClause.updatedAt.lte = toDate;
         }
       }
     }

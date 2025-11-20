@@ -86,7 +86,7 @@ export function extractMetadata(req: Request): any {
   }
 
   // Extract filters (common filter fields)
-  const filterFields = ['search', 'status', 'city', 'source', 'companyID'];
+  const filterFields = ['search', 'status', 'city', 'source', 'companyID', 'createdBy', 'updatedBy', 'createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'];
   const filters: any = {};
   let hasFilters = false;
 
