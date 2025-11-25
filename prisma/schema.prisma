@@ -22,7 +22,7 @@ model User {
   
   // User tracking fields
   createdBy   String?  // User ID who created this user
-  updatedBy   String?  // User ID who last updated this user
+  updatedBy   String?  // User ID who first updated this user
   
   // Relationships
   company     Company? @relation("UserCompany", fields: [companyId], references: [companyID])
@@ -61,7 +61,7 @@ model Company {
   
   // Company tracking fields
   createdBy      String?  // User ID who created this company
-  updatedBy      String?  // User ID who last updated this company
+  updatedBy      String?  // User ID who first updated this company
   
   // Relationships
   investors      Investor[]
@@ -123,7 +123,7 @@ model InvestorAdmin {
   
   // User tracking fields
   createdBy           String?  // User ID who created this record
-  updatedBy           String?  // User ID who last updated this record
+  updatedBy           String?  // User ID who first updated this record
   
   // Relationships
   createdByUser       User?    @relation("InvestorAdminCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)

@@ -322,14 +322,19 @@ router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: Auth
       return;
     }
     
+    // Check if lead exists and get updatedBy status
+    const existingLead = await prisma.investorAdmin.findUnique({ 
+      where: { id: numericId },
+      select: { updatedBy: true, companyID: true }
+    });
+    
+    if (!existingLead) {
+      res.status(404).json({ success: false, error: 'Lead not found' });
+      return;
+    }
+    
     // Company admins can only update leads from their company
     if (user.role === UserRole.COMPANY_ADMIN && user.companyId) {
-      // First check if the lead belongs to their company
-      const existingLead = await prisma.investorAdmin.findUnique({ where: { id: numericId } });
-      if (!existingLead) {
-        res.status(404).json({ success: false, error: 'Lead not found' });
-        return;
-      }
       if (existingLead.companyID !== user.companyId) {
         res.status(403).json({ success: false, error: 'Access denied to this lead' });
         return;
@@ -343,12 +348,15 @@ router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: Auth
     
     const parsed = investorAdminUpdateSchema.parse(sanitized);
     
+    // Only set updatedBy on first update (if it's currently null)
+    const updateData: any = { ...parsed };
+    if (!existingLead.updatedBy) {
+      updateData.updatedBy = user.userId;  // Track who first updated this
+    }
+    
     const lead = await prisma.investorAdmin.update({ 
       where: { id: numericId }, 
-      data: {
-        ...parsed,
-        updatedBy: user.userId,  // Track who updated this
-      },
+      data: updateData,
       select: {
         id: true,
         fullName: true,

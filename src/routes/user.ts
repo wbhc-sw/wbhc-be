@@ -325,10 +325,10 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
     
     const parsed = updateUserSchema.parse(sanitized);
     
-    // Get existing user to check current role if role is not being updated
+    // Get existing user to check current role and updatedBy status
     const existingUser = await prisma.user.findUnique({
       where: { id },
-      select: { role: true, companyId: true }
+      select: { role: true, companyId: true, updatedBy: true }
     });
     
     if (!existingUser) {
@@ -363,8 +363,10 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
       updateData.passwordHash = await bcrypt.hash(parsed.password, 12);
     }
     
-    // Track who updated this user
-    updateData.updatedBy = req.user!.userId;
+    // Only set updatedBy on first update (if it's currently null)
+    if (!existingUser.updatedBy) {
+      updateData.updatedBy = req.user!.userId;  // Track who first updated this user
+    }
     
     const user = await prisma.user.update({
       where: { id },
