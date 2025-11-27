@@ -523,6 +523,117 @@ router.post('/transfer/:investorId', jwtAuth, requireRole(ROLES_THAT_CAN_CREATE)
 });
 
 // @ts-expect-error: Suppress Express 5 type error
+router.get('/:id/history', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const { id } = req.params;
+    const numericId = parseInt(id, 10);
+    
+    if (isNaN(numericId)) {
+      res.status(400).json({ success: false, error: 'Invalid ID format' });
+      return;
+    }
+    
+    // Get the InvestorAdmin record
+    const lead = await prisma.investorAdmin.findUnique({
+      where: { id: numericId },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        createdAt: true,
+        companyID: true,
+        createdBy: true,
+        createdByUser: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
+    });
+    
+    if (!lead) {
+      res.status(404).json({ success: false, error: 'Lead not found' });
+      return;
+    }
+    
+    // Company-specific access control
+    if ([UserRole.COMPANY_ADMIN, UserRole.COMPANY_VIEWER, UserRole.COMPANY_CREATOR].includes(user.role)) {
+      if (!user.companyId || lead.companyID !== user.companyId) {
+        res.status(403).json({ success: false, error: 'Access denied to this lead' });
+        return;
+      }
+    }
+    
+    // Get creation record - match existing API naming conventions
+    const creationRecord = {
+      action: 'CREATE' as const,
+      createdAt: lead.createdAt,
+      createdByUser: lead.createdByUser,
+      changes: {
+        fullName: lead.fullName,
+        phoneNumber: lead.phoneNumber
+      }
+    };
+    
+    // Get all update history from ActivityLog
+    // requestBody contains all fields that were updated: leadStatus, notes, investmentAmount, etc.
+    const updateHistory = await prisma.activityLog.findMany({
+      where: {
+        resourceType: 'InvestorAdmin',
+        resourceId: String(numericId),
+        action: 'UPDATE'
+      },
+      orderBy: {
+        createdAt: 'asc'
+      },
+      select: {
+        id: true,
+        username: true,
+        userRole: true,
+        createdAt: true,
+        requestBody: true,  // Contains all updated fields including notes, leadStatus, investmentAmount, etc.
+        user: {
+          select: {
+            id: true,
+            username: true
+          }
+        }
+      }
+    });
+    
+    // Format update history - match existing API naming conventions
+    const formattedUpdates = updateHistory.map(update => ({
+      action: 'UPDATE' as const,
+      updatedAt: update.createdAt,
+      updatedByUser: {
+        id: update.user?.id || null,
+        username: update.username
+      },
+      userRole: update.userRole,
+      changes: update.requestBody as any  // This includes all fields: leadStatus, notes, investmentAmount, etc.
+    }));
+    
+    // Combine creation and updates
+    const history = [creationRecord, ...formattedUpdates];
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        id: lead.id,
+        fullName: lead.fullName,
+        history: history,
+        totalUpdates: formattedUpdates.length
+      }
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @ts-expect-error: Suppress Express 5 type error
 router.get('/statistics', jwtAuth, requireRole(ROLES_THAT_CAN_READ), async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const user = req.user!;

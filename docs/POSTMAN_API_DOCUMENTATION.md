@@ -88,6 +88,7 @@ test_lead_id: (will be set after creating lead)
 | `PUT` | `/api/admin/investor-admin/:id` | Update lead | ✅ JWT | admin roles only |
 | `POST` | `/api/admin/investor-admin/transfer/:investorId` | Transfer submission | ✅ JWT | admin, creator roles |
 | `GET` | `/api/admin/investor-admin/statistics` | Get statistics | ✅ JWT | All roles (scoped) |
+| `GET` | `/api/admin/investor-admin/:id/history` | Get lead update history | ✅ JWT | All roles (scoped) |
 | **🏥 System** |
 | `GET` | `/health` | Health check | ❌ | Public |
 
@@ -869,6 +870,145 @@ investorId: {{test_investor_id}}
   "error": "Investor already transferred"
 }
 ```
+
+---
+
+### **GET http://localhost:4000/api/admin/investor-admin/:id/history**
+**Description:** Get complete update history for a specific InvestorAdmin lead
+
+**Headers:**
+```
+Cookie: admin_jwt={{admin_jwt}}
+```
+
+**URL Parameters:**
+- `:id` - The InvestorAdmin ID (integer)
+
+**Example Request:**
+```
+GET http://localhost:4000/api/admin/investor-admin/123/history
+```
+
+**Expected Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 123,
+    "fullName": "John Doe",
+    "totalUpdates": 3,
+    "history": [
+      {
+        "action": "CREATE",
+        "createdAt": "2025-01-15T10:00:00.000Z",
+        "createdByUser": {
+          "id": "user-uuid",
+          "username": "admin"
+        },
+        "changes": {
+          "fullName": "John Doe",
+          "phoneNumber": "+1234567890"
+        }
+      },
+      {
+        "action": "UPDATE",
+        "updatedAt": "2025-01-16T14:30:00.000Z",
+        "updatedByUser": {
+          "id": "user-uuid-2",
+          "username": "user1"
+        },
+        "userRole": "company_admin",
+        "changes": {
+          "leadStatus": "contacted",
+          "notes": "Called client - interested in investment"
+        }
+      },
+      {
+        "action": "UPDATE",
+        "updatedAt": "2025-01-17T09:15:00.000Z",
+        "updatedByUser": {
+          "id": "user-uuid-3",
+          "username": "user2"
+        },
+        "userRole": "company_admin",
+        "changes": {
+          "notes": "Follow-up call scheduled",
+          "callingTimes": 2
+        }
+      }
+    ]
+  }
+}
+```
+
+**Response Fields:**
+- `id` - InvestorAdmin record ID
+- `fullName` - Lead's full name
+- `totalUpdates` - Number of updates (excluding creation)
+- `history` - Array of all actions (creation + updates)
+  - `action` - "CREATE" or "UPDATE"
+  - `createdAt` / `updatedAt` - Timestamp of the action
+  - `createdByUser` / `updatedByUser` - User who performed the action
+  - `userRole` - User's role at time of update (for UPDATE actions)
+  - `changes` - Object containing all fields that were changed
+
+**Error Responses:**
+
+**404 - Lead Not Found:**
+```json
+{
+  "success": false,
+  "error": "Lead not found"
+}
+```
+
+**403 - Access Denied:**
+```json
+{
+  "success": false,
+  "error": "Access denied to this lead"
+}
+```
+
+**401 - Unauthorized:**
+```json
+{
+  "success": false,
+  "error": "Missing authentication cookie"
+}
+```
+
+**Testing Steps:**
+
+1. **Login First:**
+   ```
+   POST http://localhost:4000/api/admin/users/login
+   Body: { "username": "admin", "password": "yourpassword" }
+   ```
+
+2. **Get a Lead ID:**
+   ```
+   GET http://localhost:4000/api/admin/investor-admin
+   ```
+   Copy an `id` from the response (e.g., `123`)
+
+3. **Get History:**
+   ```
+   GET http://localhost:4000/api/admin/investor-admin/123/history
+   ```
+
+4. **Test with Different Leads:**
+   - Try with a lead that has many updates
+   - Try with a newly created lead (should show only CREATE)
+   - Try with a lead from another company (if company user - should get 403)
+
+**What to Verify:**
+- ✅ History shows creation record
+- ✅ All updates appear in chronological order
+- ✅ Each update shows who made it and when
+- ✅ `changes` object contains all updated fields (notes, leadStatus, etc.)
+- ✅ Company users can only see their company's leads
+- ✅ `totalUpdates` matches the number of UPDATE actions
 
 ---
 
