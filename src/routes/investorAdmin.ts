@@ -322,10 +322,27 @@ router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: Auth
       return;
     }
     
-    // Check if lead exists and get updatedBy status
+    // Check if lead exists and get all fields for comparison
     const existingLead = await prisma.investorAdmin.findUnique({ 
       where: { id: numericId },
-      select: { updatedBy: true, companyID: true }
+      select: { 
+        updatedBy: true, 
+        companyID: true,
+        fullName: true,
+        phoneNumber: true,
+        city: true,
+        source: true,
+        emailSentToAdmin: true,
+        emailSentToInvestor: true,
+        notes: true,
+        callingTimes: true,
+        leadStatus: true,
+        originalInvestorId: true,
+        investmentAmount: true,
+        calculatedTotal: true,
+        sharesQuantity: true,
+        msgDate: true
+      }
     });
     
     if (!existingLead) {
@@ -347,6 +364,43 @@ router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: Auth
     );
     
     const parsed = investorAdminUpdateSchema.parse(sanitized);
+    
+    // Check if there are any actual changes before proceeding
+    // This prevents storing empty updates in ActivityLog
+    const updatableFields = [
+      'fullName', 'phoneNumber', 'city', 'source', 'emailSentToAdmin',
+      'emailSentToInvestor', 'notes', 'callingTimes', 'leadStatus',
+      'originalInvestorId', 'investmentAmount', 'calculatedTotal',
+      'sharesQuantity', 'msgDate'
+    ];
+    
+    let hasChanges = false;
+    for (const field of updatableFields) {
+      if (field in parsed) {
+        const newValue = parsed[field as keyof typeof parsed];
+        const oldValue = existingLead[field as keyof typeof existingLead];
+        
+        // Check if value actually changed
+        const changed = 
+          newValue !== oldValue && 
+          !(newValue == null && oldValue == null) &&
+          JSON.stringify(newValue) !== JSON.stringify(oldValue);
+        
+        if (changed) {
+          hasChanges = true;
+          break;
+        }
+      }
+    }
+    
+    // Reject if no changes detected
+    if (!hasChanges) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'No changes detected. Please update at least one field before submitting.' 
+      });
+      return;
+    }
     
     // Only set updatedBy on first update (if it's currently null)
     const updateData: any = { ...parsed };
