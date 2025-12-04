@@ -206,10 +206,9 @@ router.put('/:companyID', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), requireCo
     
     const parsed = companyUpdateSchema.parse(sanitized);
     
-    // Check if this is the first update (updatedBy is null)
+    // Check if company exists
     const existingCompany = await prisma.company.findUnique({ 
-      where: { companyID: companyId },
-      select: { updatedBy: true }
+      where: { companyID: companyId }
     });
     
     if (!existingCompany) {
@@ -217,11 +216,9 @@ router.put('/:companyID', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), requireCo
       return;
     }
     
-    // Only set updatedBy on first update (if it's currently null)
+    // Always set updatedBy to track the last user who updated this
     const updateData: any = { ...parsed };
-    if (!existingCompany.updatedBy) {
-      updateData.updatedBy = req.user!.userId;  // Track who first updated this company
-    }
+    updateData.updatedBy = req.user!.userId;  // Track who last updated this company
     
     const company = await prisma.company.update({
       where: { companyID: companyId },

@@ -363,10 +363,8 @@ router.put('/:id', jwtAuth, requireRole([UserRole.SUPER_ADMIN]), async (req: Aut
       updateData.passwordHash = await bcrypt.hash(parsed.password, 12);
     }
     
-    // Only set updatedBy on first update (if it's currently null)
-    if (!existingUser.updatedBy) {
-      updateData.updatedBy = req.user!.userId;  // Track who first updated this user
-    }
+    // Always set updatedBy to track the last user who updated this
+    updateData.updatedBy = req.user!.userId;  // Track who last updated this user
     
     const user = await prisma.user.update({
       where: { id },

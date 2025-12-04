@@ -402,11 +402,9 @@ router.put('/:id', jwtAuth, requireRole(ROLES_THAT_CAN_UPDATE), async (req: Auth
       return;
     }
     
-    // Only set updatedBy on first update (if it's currently null)
+    // Always set updatedBy to track the last user who updated this
     const updateData: any = { ...parsed };
-    if (!existingLead.updatedBy) {
-      updateData.updatedBy = user.userId;  // Track who first updated this
-    }
+    updateData.updatedBy = user.userId;  // Track who last updated this
     
     const lead = await prisma.investorAdmin.update({ 
       where: { id: numericId }, 
